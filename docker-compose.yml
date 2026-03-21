@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: burnout-postgres
+    environment:
+      POSTGRES_DB: burnout_db
+      POSTGRES_USER: burnout_user
+      POSTGRES_PASSWORD: "Shara@0526"
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U burnout_user -d burnout_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: burnout-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: burnout-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./burnout-backend
+    container_name: burnout-backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - ./burnout-backend/.env
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/burnout_db
+      SPRING_DATASOURCE_USERNAME: burnout_user
+      SPRING_DATASOURCE_PASSWORD: "Shara@0526"
+      REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq
+
+  frontend:
+    build:
+      context: ./burnout-frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./burnout-frontend/src:/app/src
+      - ./burnout-frontend/public:/app/public
+      - ./burnout-frontend/next.config.mjs:/app/next.config.mjs
+      - ./burnout-frontend/tailwind.config.js:/app/tailwind.config.js
+      - ./burnout-frontend/postcss.config.js:/app/postcss.config.js
+      - /app/node_modules
+      - /app/.next
+    container_name: burnout-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8080
+
+volumes:
+  postgres_data:

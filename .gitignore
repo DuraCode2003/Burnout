@@ -1,0 +1,31 @@
+# Backend
+burnout-backend/target/
+burnout-backend/.mvn/
+burnout-backend/mvnw
+burnout-backend/mvnw.cmd
+burnout-backend/.env
+
+# Frontend
+burnout-frontend/.next/
+burnout-frontend/node_modules/
+burnout-frontend/out/
+burnout-frontend/.env.local
+burnout-frontend/.env*.local
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Testing
+coverage/
+*.test-results.xml
