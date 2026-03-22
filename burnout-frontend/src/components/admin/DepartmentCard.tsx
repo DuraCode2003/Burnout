@@ -82,9 +82,10 @@ function ScoreRing({ score, size = 80 }: { score: number; size?: number }) {
 
 export function DepartmentCard({ department }: DepartmentCardProps) {
   const [expanded, setExpanded] = useState(false);
-  const colors = riskColors[department.riskLevel];
-  const TrendIcon = trendIcons[department.trend].icon;
-  const trendColor = trendIcons[department.trend].color;
+  const colors = riskColors[department.riskLevel as keyof typeof riskColors] || riskColors.LOW;
+  const trendData = trendIcons[department.trend as keyof typeof trendIcons] || trendIcons.stable;
+  const TrendIcon = trendData.icon;
+  const trendColor = trendData.color;
 
   return (
     <motion.div

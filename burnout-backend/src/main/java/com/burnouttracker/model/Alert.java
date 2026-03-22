@@ -11,6 +11,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Alert entity for counselor dashboard
+ * Tracks student burnout risk alerts with privacy-preserving student references
+ */
 @Entity
 @Table(name = "alerts")
 @Data
@@ -24,59 +28,103 @@ public class Alert {
     @Builder.Default
     private UUID id = UUID.randomUUID();
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    /**
+     * Student user ID (not a @ManyToOne join to keep queries simple)
+     * Student identity is shown based on consent.anonymize_data setting
+     */
+    @Column(name = "user_id", nullable = false)
+    private UUID userId;
 
+    /**
+     * Alert severity tier
+     */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 10)
+    @Column(name = "alert_type", nullable = false, length = 10)
     private AlertType alertType;
 
+    /**
+     * Alert lifecycle status
+     */
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 15)
+    @Column(name = "status", nullable = false, length = 15)
     @Builder.Default
     private AlertStatus status = AlertStatus.ACTIVE;
 
-    @Column(name = "trigger_reason", length = 500)
+    /**
+     * Plain English explanation of what triggered this alert
+     */
+    @Column(name = "trigger_reason", nullable = false, columnDefinition = "TEXT")
     private String triggerReason;
 
-    @Column(name = "burnout_score", precision = 5, scale = 2)
+    /**
+     * Burnout score at time of alert creation
+     */
+    @Column(name = "burnout_score", nullable = false, precision = 5, scale = 2)
     private BigDecimal burnoutScore;
 
-    @Column(name = "risk_level", length = 10)
+    /**
+     * Risk level at time of alert: LOW, MEDIUM, HIGH, CRITICAL
+     */
+    @Column(name = "risk_level", nullable = false, length = 10)
     private String riskLevel;
 
+    /**
+     * Assigned counselor (NULL until acknowledged)
+     */
     @Column(name = "counselor_id")
     private UUID counselorId;
 
+    /**
+     * Chronological log of counselor actions and internal notes
+     * Student never sees this content
+     */
     @Column(name = "counselor_note", columnDefinition = "TEXT")
     private String counselorNote;
 
+    /**
+     * Timestamp when counselor contacted the student
+     */
     @Column(name = "contacted_at")
     private LocalDateTime contactedAt;
 
+    /**
+     * Timestamp when alert was resolved
+     */
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
 
+    /**
+     * Alert creation timestamp
+     */
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    /**
+     * Last update timestamp (auto-updated by trigger)
+     */
     @UpdateTimestamp
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     /**
-     * Check if this alert is urgent (RED type or escalated)
+     * Check if this alert is urgent (RED type)
      */
     public boolean isUrgent() {
-        return alertType == AlertType.RED || status == AlertStatus.ESCALATED;
+        return alertType == AlertType.RED;
     }
 
     /**
-     * Check if alert requires response within 2 hours (RED alerts)
+     * Check if alert requires response within 2 hours
      */
     public boolean requiresUrgentResponse() {
         return alertType == AlertType.RED && status == AlertStatus.ACTIVE;
+    }
+
+    /**
+     * Check if alert is in terminal state (no more actions needed)
+     */
+    public boolean isTerminal() {
+        return status.isTerminal();
     }
 }

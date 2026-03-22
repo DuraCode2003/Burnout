@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 
+/**
+ * Counselor dashboard statistics
+ */
 @Data
 @Builder
 @NoArgsConstructor
@@ -15,33 +18,32 @@ public class CounselorStatsDTO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private AlertQueueStatsDTO queue;
-    private CounselorMetricsDTO metrics;
-    private String lastUpdated;
+    private AlertQueueStats queue;
+    private CounselorMetrics metrics;
+    private long totalStudentsMonitored;
 
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class AlertQueueStatsDTO {
-        private Long total;
-        private Long red;
-        private Long orange;
-        private Long yellow;
-        private Long urgent;
-        private Long assignedToMe;
-        private Long unassigned;
+    public static class AlertQueueStats implements Serializable {
+        private long total;
+        private long red;
+        private long orange;
+        private long yellow;
+        private long urgent;
+        private long assignedToMe;
+        private long unassigned;
     }
 
     @Data
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class CounselorMetricsDTO {
-        private Long alertsResolved;
-        private Double avgResponseTime;
-        private Long studentsContacted;
-        private Long escalationsMade;
-        private Double responseTimeSLA;
+    public static class CounselorMetrics implements Serializable {
+        private long alertsResolved;
+        private double avgResponseTime;
+        private long studentsContacted;
+        private long escalationsMade;
     }
 }

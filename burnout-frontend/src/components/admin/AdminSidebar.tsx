@@ -14,7 +14,10 @@ import {
   LogOut,
   ArrowLeft,
   User,
+  Users,
 } from "lucide-react";
+import Image from "next/image";
+import logo from "@/assets/logo.png";
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -41,14 +44,20 @@ const navItems = [
     icon: FileDown,
     description: "Export & analytics",
   },
+  {
+    label: "Users",
+    href: "/admin/users",
+    icon: Users,
+    description: "Assign roles",
+  },
 ];
 
 export function AdminSidebar({ isOpen, onClose, activeRoute }: AdminSidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
   };
 
   const sidebarContent = (
@@ -57,12 +66,17 @@ export function AdminSidebar({ isOpen, onClose, activeRoute }: AdminSidebarProps
       <div className="flex items-center justify-between px-6 py-5 border-b border-border-subtle">
         <div className="flex items-center gap-3">
           <motion.div
-            className="w-10 h-10 rounded-xl bg-gradient-admin flex items-center justify-center shadow-glow-admin"
+            className="relative w-11 h-11 rounded-xl overflow-hidden shadow-glow-admin border border-border-subtle"
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, damping: 15 }}
           >
-            <Shield className="w-5 h-5 text-white" />
+            <Image 
+              src={logo} 
+              alt="Burnout Tracker Logo" 
+              fill 
+              className="object-cover"
+            />
           </motion.div>
           <div>
             <h2 className="text-sm font-bold font-sora text-text-primary">

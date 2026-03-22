@@ -144,6 +144,30 @@ export function hasAdminPrivileges(user: AdminUser | null | undefined): boolean 
 }
 
 // ============================================================================
+// USER MANAGEMENT
+// ============================================================================
+
+/**
+ * User record for admin management
+ */
+export interface UserManagement {
+  id: string;
+  name: string;
+  email: string;
+  role: "STUDENT" | "ADMIN" | "COUNSELOR";
+  department?: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+/**
+ * Request to update user role
+ */
+export interface UpdateRoleRequest {
+  role: "STUDENT" | "ADMIN" | "COUNSELOR";
+}
+
+// ============================================================================
 // API REQUEST/RESPONSE TYPES
 // ============================================================================
 

@@ -10,7 +10,7 @@ interface AuthContextType {
   loading: boolean;
   login: (data: LoginData) => Promise<AuthResponse>;
   register: (data: RegisterData) => Promise<AuthResponse>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateConsent: (data: ConsentData) => Promise<AuthResponse>;
   refreshUser: () => Promise<void>;
 }
@@ -56,8 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return response;
   };
 
-  const logout = () => {
-    authService.logout();
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
   };
 

@@ -145,9 +145,10 @@ export function DepartmentRiskTable({ departments }: DepartmentRiskTableProps) {
           </thead>
           <tbody>
             {sortedDepartments.map((dept, index) => {
-              const colors = riskColors[dept.riskLevel];
-              const TrendIcon = trendIcons[dept.trend].icon;
-              const trendColor = trendIcons[dept.trend].color;
+              const colors = riskColors[dept.riskLevel as keyof typeof riskColors] || riskColors.LOW;
+              const trendData = trendIcons[dept.trend as keyof typeof trendIcons] || trendIcons.stable;
+              const TrendIcon = trendData.icon;
+              const trendColor = trendData.color;
 
               return (
                 <motion.tr

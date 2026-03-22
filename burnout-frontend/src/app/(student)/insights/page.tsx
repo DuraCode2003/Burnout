@@ -163,7 +163,7 @@ export default function InsightsPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="w-full">
             <motion.header
               className="mb-8"
               initial={{ opacity: 0, y: -20 }}

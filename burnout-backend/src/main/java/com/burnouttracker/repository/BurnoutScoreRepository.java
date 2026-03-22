@@ -17,6 +17,8 @@ public interface BurnoutScoreRepository extends JpaRepository<BurnoutScore, UUID
 
     Optional<BurnoutScore> findTopByUserIdOrderByCreatedAtDesc(UUID userId);
 
+    List<BurnoutScore> findTop5ByUserIdOrderByCreatedAtDesc(UUID userId);
+
     List<BurnoutScore> findByUserIdOrderByCreatedAtDesc(UUID userId);
 
     List<BurnoutScore> findByUserIdAndCreatedAtBetween(UUID userId, LocalDateTime startDate, LocalDateTime endDate);

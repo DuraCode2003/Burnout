@@ -15,6 +15,7 @@ import {
   Clock,
   Shield,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { DepartmentStats } from "@/types/admin";
 

@@ -262,7 +262,7 @@ export default function BreathingPage() {
         </button>
       </motion.header>
 
-      <main className="min-h-screen flex flex-col items-center justify-center p-4 xs:p-6 lg:p-8 relative z-10">
+      <main className="min-h-screen flex flex-col items-center justify-center p-6 md:p-8 lg:p-12 relative z-10">
         <AnimatePresence mode="wait">
           {sessionState === 'selecting' && (
             <motion.div

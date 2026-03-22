@@ -331,6 +331,16 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+.p-card {
+  padding: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .p-card {
+    padding: 2rem;
+  }
+}
+
 .glass-card {
   background: rgba(26, 34, 53, 0.7);
   backdrop-filter: blur(12px);
@@ -375,6 +385,19 @@ h1, h2, h3, h4, h5, h6 {
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+}
+
+@keyframes scanning-light {
+  0% {
+    transform: translateX(-150%) skewX(-25deg);
+  }
+  100% {
+    transform: translateX(150%) skewX(-25deg);
+  }
+}
+
+.animate-scanning-light {
+  animation: scanning-light 3s ease-in-out infinite;
 }
 
 /* Focus States */

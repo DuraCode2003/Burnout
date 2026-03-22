@@ -28,18 +28,18 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("""
         SELECT 
             u.department,
-            COUNT(u),
+            COUNT(DISTINCT u.id),
             COALESCE(AVG(b.score), 0),
-            SUM(CASE WHEN b.riskLevel = 'HIGH' THEN 1 ELSE 0 END),
-            SUM(CASE WHEN b.riskLevel = 'MEDIUM' THEN 1 ELSE 0 END),
-            SUM(CASE WHEN b.riskLevel = 'LOW' THEN 1 ELSE 0 END),
+            COUNT(DISTINCT CASE WHEN b.riskLevel = 'HIGH' THEN b.id END),
+            COUNT(DISTINCT CASE WHEN b.riskLevel = 'MEDIUM' THEN b.id END),
+            COUNT(DISTINCT CASE WHEN b.riskLevel = 'LOW' THEN b.id END),
             COUNT(DISTINCT CASE WHEN m.createdAt >= :weekAgo THEN m.user.id END)
         FROM User u
         LEFT JOIN BurnoutScore b ON u.id = b.user.id
         LEFT JOIN MoodEntry m ON u.id = m.user.id
-        WHERE u.role = 'STUDENT' AND u.isActive = true
+        WHERE u.role = com.burnouttracker.model.enums.Role.STUDENT AND u.isActive = true
         GROUP BY u.department
-        ORDER BY COUNT(u) DESC
+        ORDER BY COUNT(DISTINCT u.id) DESC
     """)
     List<Object[]> getDepartmentAggregateStats(@Param("weekAgo") LocalDateTime weekAgo);
 
