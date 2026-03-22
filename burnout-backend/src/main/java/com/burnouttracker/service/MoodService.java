@@ -22,13 +22,16 @@ public class MoodService {
     private final MoodEntryRepository moodEntryRepository;
     private final BurnoutScoreRepository burnoutScoreRepository;
     private final UserRepository userRepository;
+    private final AlertTriggerService alertTriggerService;
 
     public MoodService(MoodEntryRepository moodEntryRepository,
                       BurnoutScoreRepository burnoutScoreRepository,
-                      UserRepository userRepository) {
+                      UserRepository userRepository,
+                      AlertTriggerService alertTriggerService) {
         this.moodEntryRepository = moodEntryRepository;
         this.burnoutScoreRepository = burnoutScoreRepository;
         this.userRepository = userRepository;
+        this.alertTriggerService = alertTriggerService;
     }
 
     @Transactional
@@ -53,6 +56,9 @@ public class MoodService {
         
         // Calculate Burnout Score
         calculateAndSaveBurnoutScore(user, request, stressEnum);
+        
+        // Trigger alert evaluation if thresholds are met
+        alertTriggerService.evaluateAndTriggerAlert(userId);
         
         return savedEntry;
     }

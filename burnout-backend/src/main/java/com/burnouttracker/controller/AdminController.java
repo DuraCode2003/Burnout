@@ -1,5 +1,7 @@
 package com.burnouttracker.controller;
 
+import com.burnouttracker.dto.request.UpdateRoleRequest;
+import com.burnouttracker.dto.response.UserManagementDTO;
 import com.burnouttracker.dto.response.admin.*;
 import com.burnouttracker.service.AdminService;
 import org.springframework.http.HttpHeaders;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -108,5 +111,35 @@ public class AdminController {
     public ResponseEntity<List<HeatmapDataPoint>> getHeatmapData() {
         List<HeatmapDataPoint> data = adminService.getHeatmapData();
         return ResponseEntity.ok(data);
+    }
+
+    /**
+     * GET /api/admin/users
+     * Returns all users in the system (Admin only)
+     */
+    @GetMapping("/users")
+    public ResponseEntity<List<UserManagementDTO>> getAllUsers() {
+        return ResponseEntity.ok(adminService.getAllUsers());
+    }
+
+    /**
+     * PUT /api/admin/users/{userId}/role
+     * Updates a user's role (Admin only)
+     */
+    @PutMapping("/users/{userId}/role")
+    public ResponseEntity<UserManagementDTO> updateUserRole(
+            @PathVariable UUID userId,
+            @RequestBody UpdateRoleRequest request) {
+        return ResponseEntity.ok(adminService.updateUserRole(userId, request.getRole()));
+    }
+
+    /**
+     * POST /api/admin/users/staff
+     * Creates a new staff member (Admin/Counselor)
+     */
+    @PostMapping("/users/staff")
+    public ResponseEntity<UserManagementDTO> createStaffUser(
+            @RequestBody com.burnouttracker.dto.request.CreateStaffRequest request) {
+        return ResponseEntity.ok(adminService.createStaffUser(request));
     }
 }

@@ -74,14 +74,14 @@ export default function StudentLayout({ children }: StudentLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary">
+    <div className="h-screen flex flex-col overflow-hidden bg-bg-primary">
       <Navbar />
 
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
         <Sidebar />
 
-        <main className="flex-1 lg:ml-0 pb-20 lg:pb-0">
-          <div className="p-4 xs:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto scrollbar-hide pb-20 lg:pb-0">
+          <div className="p-6 md:p-8 lg:p-12">
             <AnimatePresence mode="wait">
               <PageTransition key={pathname}>{children}</PageTransition>
             </AnimatePresence>

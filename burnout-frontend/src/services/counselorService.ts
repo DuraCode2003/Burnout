@@ -29,7 +29,7 @@ export const counselorService = {
   async getActiveAlerts(): Promise<Alert[]> {
     const response = await api.get<Alert[]>("/api/counselor/alerts");
     return response.data;
-  }
+  },
 
   /**
    * Fetch single alert by ID
@@ -39,7 +39,7 @@ export const counselorService = {
   async getAlertById(alertId: string): Promise<Alert> {
     const response = await api.get<Alert>(`/api/counselor/alerts/${alertId}`);
     return response.data;
-  }
+  },
 
   /**
    * Mark alert as resolved
@@ -53,7 +53,7 @@ export const counselorService = {
       request || {}
     );
     return response.data;
-  }
+  },
 
   /**
    * Escalate alert to senior counselor
@@ -67,7 +67,7 @@ export const counselorService = {
       request
     );
     return response.data;
-  }
+  },
 
   /**
    * Add counselor note to alert
@@ -81,7 +81,7 @@ export const counselorService = {
       request
     );
     return response.data;
-  }
+  },
 
   /**
    * Log that student was contacted
@@ -95,7 +95,7 @@ export const counselorService = {
       request
     );
     return response.data;
-  }
+  },
 
   /**
    * Send check-in message to student
@@ -109,7 +109,7 @@ export const counselorService = {
       request
     );
     return response.data;
-  }
+  },
 
   /**
    * Claim/assign alert to current counselor
@@ -121,7 +121,7 @@ export const counselorService = {
       `/api/counselor/alerts/${alertId}/claim`
     );
     return response.data;
-  }
+  },
 
   /**
    * Fetch counselor overview statistics
@@ -130,7 +130,7 @@ export const counselorService = {
   async getCounselorStats(): Promise<CounselorStats> {
     const response = await api.get<CounselorStats>("/api/counselor/stats");
     return response.data;
-  }
+  },
 
   /**
    * Fetch resolved alert history with pagination
@@ -143,7 +143,7 @@ export const counselorService = {
       params: { page, size },
     });
     return response.data;
-  }
+  },
 
   /**
    * Fetch crisis resources
@@ -152,7 +152,7 @@ export const counselorService = {
   async getCrisisResources(): Promise<CrisisResources> {
     const response = await api.get<CrisisResources>("/api/counselor/crisis-resources");
     return response.data;
-  }
+  },
 
   /**
    * Fetch available message templates
@@ -161,7 +161,7 @@ export const counselorService = {
   async getMessageTemplates(): Promise<MessageTemplate[]> {
     const response = await api.get<MessageTemplate[]>("/api/counselor/message-templates");
     return response.data;
-  }
+  },
 
   /**
    * Update alert status
@@ -178,7 +178,7 @@ export const counselorService = {
       { status }
     );
     return response.data;
-  }
+  },
 
   /**
    * Get alerts for a specific student (by user ID)
@@ -188,7 +188,7 @@ export const counselorService = {
   async getAlertsByUserId(userId: string): Promise<Alert[]> {
     const response = await api.get<Alert[]>(`/api/counselor/alerts/user/${userId}`);
     return response.data;
-  }
+  },
 
   /**
    * Get alert statistics by date range
@@ -207,7 +207,7 @@ export const counselorService = {
       params: { from, to },
     });
     return response.data;
-  }
+  },
 
   /**
    * Acknowledge an alert (mark as in-progress)

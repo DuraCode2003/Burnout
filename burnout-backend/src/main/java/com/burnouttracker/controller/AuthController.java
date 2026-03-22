@@ -13,7 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.UUID;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -39,6 +39,9 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<AuthResponse> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+        if (userDetails == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         AuthResponse response = authService.getAuthResponseByEmail(userDetails.getUsername());
         return ResponseEntity.ok(response);
     }
@@ -51,5 +54,10 @@ public class AuthController {
         User user = authService.getCurrentUser(userDetails.getUsername());
         AuthResponse response = authService.updateConsent(user.getId(), request);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout() {
+        return ResponseEntity.ok().build();
     }
 }

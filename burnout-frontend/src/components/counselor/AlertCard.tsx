@@ -1,192 +1,277 @@
 "use client";
 
 import React from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
-import { Clock, AlertTriangle, User, Hash } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  AlertTriangle,
+  Hash,
+  User,
+  ArrowRight,
+  Clock,
+  TrendingUp,
+  Lock,
+} from "lucide-react";
 import type { Alert } from "@/types/counselor";
-import { RiskBadge } from "./RiskBadge";
 
 interface AlertCardProps {
   alert: Alert;
   index?: number;
 }
 
-export function AlertCard({ alert, index = 0 }: AlertCardProps) {
-  const isUrgent = alert.isUrgent || alert.tier === "RED";
-  const isOverdue = alert.responseTimeRemaining !== undefined && alert.responseTimeRemaining < 0;
-  const isAssignedToMe = alert.assignedTo;
-
-  const getTimeRemaining = () => {
-    if (alert.responseTimeRemaining === undefined) return null;
-    if (alert.responseTimeRemaining < 0) {
-      return { text: "Overdue", color: "text-danger" };
-    }
-    const hours = Math.floor(alert.responseTimeRemaining / 3600);
-    const minutes = Math.floor((alert.responseTimeRemaining % 3600) / 60);
-    if (hours > 0) {
-      return { text: `${hours}h ${minutes}m`, color: hours < 1 ? "text-warning" : "text-text-secondary" };
-    }
-    return { text: `${minutes}m`, color: "text-warning" };
-  };
-
-  const timeRemaining = getTimeRemaining();
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.3,
-        delay: index * 0.05,
-      },
+const cardVariants = {
+  hidden: { opacity: 0, y: 30, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 25,
     },
+  },
+  hover: {
+    scale: 1.02,
+    y: -4,
+    transition: { duration: 0.2 },
+  },
+};
+
+const combinedVariants = {
+  ...cardVariants,
+};
+
+export function AlertCard({ alert, index = 0 }: AlertCardProps) {
+  const router = useRouter();
+
+  const isRed = alert.tier === "RED";
+  const isOrange = alert.tier === "ORANGE";
+  const isYellow = alert.tier === "YELLOW";
+  const isUrgent = alert.isUrgent || isRed;
+
+  const getBorderColor = () => {
+    if (isRed) return "border-l-danger";
+    if (isOrange) return "border-l-[#f97316]";
+    if (isYellow) return "border-l-[#eab308]";
+    return "border-l-accent-counselor";
   };
 
-  const getGlowClass = () => {
-    if (isUrgent) return "card-glow-urgent";
-    if (alert.tier === "ORANGE") return "card-glow-orange";
-    if (alert.tier === "YELLOW") return "card-glow-yellow";
-    return "card-glow-counselor";
+  const getBgTint = () => {
+    if (isRed) return "bg-danger/5";
+    if (isOrange) return "bg-[#f97316]/5";
+    if (isYellow) return "bg-[#eab308]/5";
+    return "";
+  };
+
+  const getBadgeConfig = () => {
+    if (isRed) {
+      return {
+        label: "URGENT",
+        bgColor: "bg-danger",
+        textColor: "text-white",
+        icon: AlertTriangle,
+      };
+    }
+    if (isOrange) {
+      return {
+        label: "PRIORITY",
+        bgColor: "bg-[#f97316]",
+        textColor: "text-white",
+        icon: AlertTriangle,
+      };
+    }
+    return {
+      label: "MONITOR",
+      bgColor: "bg-[#eab308]",
+      textColor: "text-white",
+      icon: TrendingUp,
+    };
+  };
+
+  const getHeader = () => {
+    if (isRed) return "Immediate attention required";
+    if (isOrange) return "Consistent downward trend";
+    return "Sub-baseline pattern detected";
+  };
+
+  const getActionButton = () => {
+    if (isRed) {
+      return {
+        label: "Respond Now",
+        bgColor: "bg-gradient-urgent",
+        showIcon: true,
+      };
+    }
+    return {
+      label: "View Details",
+      bgColor: "bg-bg-elevated",
+      showIcon: true,
+    };
+  };
+
+  const badge = getBadgeConfig();
+  const actionButton = getActionButton();
+  const BadgeIcon = badge.icon;
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    return `${diffDays}d ago`;
+  };
+
+  const handleClick = () => {
+    router.push(`/counselor/alert/${alert.id}`);
   };
 
   return (
     <motion.div
-      variants={cardVariants}
+      variants={combinedVariants}
       initial="hidden"
       animate="visible"
-      whileHover={{ scale: 1.01 }}
-      className={`group relative bg-bg-card rounded-2xl border transition-all duration-300 ${getGlowClass()} ${
-        isUrgent ? "border-danger/30" : "border-border-subtle"
-      }`}
+      whileHover="hover"
+      onClick={handleClick}
+      className={`group relative p-5 rounded-2xl bg-bg-card ${getBgTint()} border ${getBorderColor()} border-l-4 border-border-subtle cursor-pointer transition-all duration-300 hover:border-opacity-50`}
+      style={{
+        animationDelay: `${index * 0.1}s`,
+      }}
     >
-      <Link href={`/counselor/alert/${alert.id}`} className="block p-6">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <RiskBadge tier={alert.tier} pulsing={isUrgent} />
-            
-            {alert.status === "ESCALATED" && (
-              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/30">
-                Escalated
-              </span>
-            )}
-            
-            {isAssignedToMe && (
-              <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-accent-counselor/10 text-accent-counselor border border-accent-counselor/30">
-                Assigned
-              </span>
-            )}
-          </div>
+      {/* Urgent Glow Overlay */}
+      {isUrgent && (
+        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-danger/5 to-transparent pointer-events-none" />
+      )}
 
-          {timeRemaining && (
-            <div className={`flex items-center gap-1.5 ${timeRemaining.color}`}>
-              <Clock className="w-4 h-4" />
-              <span className="text-sm font-semibold">{timeRemaining.text}</span>
-            </div>
+      {/* Header Row */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${badge.bgColor} ${badge.textColor}`}
+          >
+            <BadgeIcon className="w-3.5 h-3.5" />
+            {badge.label}
+          </span>
+          {alert.student.isAnonymous && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-bg-elevated text-text-muted border border-border-subtle">
+              <Lock className="w-3 h-3" />
+              Anonymous
+            </span>
           )}
         </div>
 
-        {/* Student Info */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-full bg-bg-elevated flex items-center justify-center border border-border-subtle">
-            {alert.student.isAnonymous ? (
-              <Hash className="w-5 h-5 text-text-muted" />
-            ) : (
-              <User className="w-5 h-5 text-accent-counselor-light" />
-            )}
-          </div>
-          <div>
-            <p className="font-medium text-text-primary">
-              {alert.student.isAnonymous
-                ? alert.student.anonymousId
-                : alert.student.name}
-            </p>
-            <p className="text-sm text-text-muted">
-              {alert.student.department || "Student"}
-            </p>
-          </div>
+        <div className="flex items-center gap-1.5 text-text-muted">
+          <Clock className="w-3.5 h-3.5" />
+          <span className="text-xs">{formatTimeAgo(alert.createdAt)}</span>
         </div>
+      </div>
 
-        {/* Triggers */}
-        <div className="mb-4">
-          <div className="flex flex-wrap gap-2">
-            {alert.triggers.slice(0, 3).map((trigger, i) => (
-              <span
-                key={i}
-                className="px-2.5 py-1 text-xs rounded-lg bg-bg-elevated border border-border-subtle text-text-secondary"
-              >
-                {trigger.description}
-              </span>
-            ))}
-            {alert.triggers.length > 3 && (
-              <span className="px-2.5 py-1 text-xs rounded-lg bg-bg-elevated border border-border-subtle text-text-muted">
-                +{alert.triggers.length - 3} more
-              </span>
-            )}
-          </div>
+      {/* Title */}
+      <h3 className="text-sm font-semibold text-text-primary mb-1">
+        {getHeader()}
+      </h3>
+
+      {/* Student Info */}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-7 h-7 rounded-full bg-bg-elevated flex items-center justify-center border border-border-subtle">
+          {alert.student.isAnonymous ? (
+            <Hash className="w-4 h-4 text-text-muted" />
+          ) : (
+            <User className="w-4 h-4 text-accent-counselor-light" />
+          )}
         </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-text-primary truncate">
+            {alert.student.isAnonymous
+              ? alert.student.anonymousId
+              : alert.student.name}
+          </p>
+          <p className="text-xs text-text-muted truncate">
+            {alert.student.department || "Student"}
+          </p>
+        </div>
+      </div>
 
-        {/* Risk Indicators Summary */}
-        <div className="flex items-center justify-between pt-4 border-t border-border-subtle">
-          <div className="flex items-center gap-4">
-            <div>
-              <p className="text-xs text-text-muted mb-0.5">Burnout Score</p>
-              <p className={`text-lg font-bold font-sora ${
+      {/* Trigger Reason */}
+      {alert.triggers.length > 0 && (
+        <div className="mb-3">
+          <p className="text-sm text-text-secondary line-clamp-2">
+            {alert.triggers[0].description}
+          </p>
+        </div>
+      )}
+
+      {/* Footer Row */}
+      <div className="flex items-center justify-between pt-3 border-t border-border-subtle/50">
+        <div className="flex items-center gap-3">
+          {/* Burnout Score */}
+          <div className="flex items-center gap-1.5">
+            <div
+              className={`w-2 h-2 rounded-full ${
+                alert.riskIndicators.burnoutScore >= 75
+                  ? "bg-danger"
+                  : alert.riskIndicators.burnoutScore >= 50
+                  ? "bg-warning"
+                  : "bg-success"
+              }`}
+            />
+            <span className="text-xs text-text-secondary">Score:</span>
+            <span
+              className={`text-sm font-bold font-sora ${
                 alert.riskIndicators.burnoutScore >= 75
                   ? "text-danger"
                   : alert.riskIndicators.burnoutScore >= 50
                   ? "text-warning"
                   : "text-success"
-              }`}>
-                {alert.riskIndicators.burnoutScore}
-                <span className="text-sm text-text-muted font-normal">/100</span>
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-text-muted mb-0.5">Mood Trend</p>
-              <p className={`text-sm font-medium ${
+              }`}
+            >
+              {Math.round(alert.riskIndicators.burnoutScore)}
+            </span>
+          </div>
+
+          {/* Mood Trend */}
+          <div className="flex items-center gap-1.5">
+            <TrendingUp
+              className={`w-3.5 h-3.5 ${
                 alert.riskIndicators.moodTrend === "declining"
-                  ? "text-danger"
+                  ? "text-danger rotate-180"
                   : alert.riskIndicators.moodTrend === "improving"
                   ? "text-success"
-                  : "text-text-secondary"
-              }`}>
-                {alert.riskIndicators.moodTrend.charAt(0).toUpperCase() +
-                  alert.riskIndicators.moodTrend.slice(1)}
-              </p>
-            </div>
-          </div>
-
-          <div className="text-right">
-            <p className="text-xs text-text-muted mb-0.5">Created</p>
-            <p className="text-sm text-text-secondary">
-              {new Date(alert.createdAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
+                  : "text-text-muted"
+              }`}
+            />
+            <span className="text-xs text-text-secondary capitalize">
+              {alert.riskIndicators.moodTrend}
+            </span>
           </div>
         </div>
-      </Link>
 
-      {/* Urgent Overlay */}
-      {isOverdue && (
-        <motion.div
-          className="absolute inset-0 rounded-2xl border-2 border-danger pointer-events-none"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
+        {/* Action Button */}
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+            isRed
+              ? "bg-gradient-urgent text-white shadow-lg"
+              : "bg-bg-elevated text-text-secondary group-hover:text-text-primary"
+          }`}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClick();
+          }}
         >
-          <div className="absolute top-4 right-4 flex items-center gap-1.5 text-danger">
-            <AlertTriangle className="w-4 h-4" />
-            <span className="text-xs font-bold">OVERDUE</span>
-          </div>
-        </motion.div>
-      )}
+          {actionButton.label}
+          {actionButton.showIcon && <ArrowRight className="w-3.5 h-3.5" />}
+        </motion.button>
+      </div>
+
+
     </motion.div>
   );
 }

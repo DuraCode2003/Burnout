@@ -1,32 +1,24 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import counselorService from "@/services/counselorService";
+import { UrgentAlertBanner } from "@/components/counselor/UrgentAlertBanner";
 import { CounselorStatsBar } from "@/components/counselor/CounselorStatsBar";
-import { AlertCard } from "@/components/counselor/AlertCard";
-import { RiskBadge } from "@/components/counselor/RiskBadge";
-import { AlertFilters, AlertSort, AlertTier, AlertStatus } from "@/types/counselor";
-import { CounselorStats as CounselorStatsType } from "@/types/counselor";
-import {
-  Filter,
-  RefreshCw,
-  AlertTriangle,
-  Inbox,
-  Clock,
-  TrendingUp,
-} from "lucide-react";
-import type { Alert } from "@/types/counselor";
+import { AlertFilterTabs } from "@/components/counselor/AlertFilterTabs";
+import { AlertQueue } from "@/components/counselor/AlertQueue";
+import { CounselorResources } from "@/components/counselor/CounselorResources";
+import { RefreshCw, Filter } from "lucide-react";
+import type { Alert, CounselorStats, AlertType } from "@/types/counselor";
 
 export default function CounselorDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [stats, setStats] = useState<CounselorStatsType | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
-  const [filters, setFilters] = useState<AlertFilters>({});
-  const [sort, setSort] = useState<AlertSort>({ field: "createdAt", order: "desc" });
-  const [showFilters, setShowFilters] = useState(false);
+  const [stats, setStats] = useState<CounselorStats | null>(null);
+  const [activeFilter, setActiveFilter] = useState<AlertType | "ALL">("ALL");
 
+  // Fetch data
   const fetchData = useCallback(async (isRefresh = false) => {
     try {
       if (isRefresh) {
@@ -35,73 +27,47 @@ export default function CounselorDashboardPage() {
         setLoading(true);
       }
 
-      const [statsData, alertsData] = await Promise.all([
-        counselorService.getStats(),
-        counselorService.getAlerts(filters, sort),
+      const [alertsData, statsData] = await Promise.all([
+        counselorService.getActiveAlerts(),
+        counselorService.getCounselorStats(),
       ]);
 
-      setStats(statsData);
       setAlerts(alertsData);
+      setStats(statsData);
     } catch (error) {
       console.error("Failed to fetch counselor data:", error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [filters, sort]);
+  }, []);
 
+  // Initial fetch
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // Auto-refresh every 2 minutes
+  // Auto-refresh every 60 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       fetchData(true);
-    }, 2 * 60 * 1000);
+    }, 60 * 1000);
+
     return () => clearInterval(interval);
   }, [fetchData]);
 
-  const toggleTierFilter = (tier: AlertTier) => {
-    setFilters((prev) => {
-      const current = prev.tier || [];
-      const updated = current.includes(tier)
-        ? current.filter((t) => t !== tier)
-        : [...current, tier];
-      return { ...prev, tier: updated.length > 0 ? updated : undefined };
-    });
+  // Get urgent alerts (RED tier)
+  const urgentAlerts = alerts.filter(
+    (alert) => alert.tier === "RED" && alert.status === "ACTIVE"
+  );
+
+  // Get filter counts
+  const filterCounts = {
+    all: alerts.length,
+    red: alerts.filter((a) => a.tier === "RED").length,
+    orange: alerts.filter((a) => a.tier === "ORANGE").length,
+    yellow: alerts.filter((a) => a.tier === "YELLOW").length,
   };
-
-  const clearFilters = () => {
-    setFilters({});
-    setSort({ field: "createdAt", order: "desc" });
-  };
-
-  const hasActiveFilters = Object.keys(filters).length > 0;
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <div className="w-64 h-8 rounded-lg bg-bg-elevated animate-shimmer" />
-            <div className="w-40 h-4 rounded bg-bg-elevated animate-shimmer" />
-          </div>
-          <div className="w-32 h-10 rounded-xl bg-bg-elevated animate-shimmer" />
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-24 rounded-2xl bg-bg-card animate-shimmer" />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-48 rounded-2xl bg-bg-card animate-shimmer" />
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -110,122 +76,81 @@ export default function CounselorDashboardPage() {
         className="flex items-center justify-between"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
       >
         <div>
           <h1 className="text-3xl font-bold font-sora text-text-primary">
             Alert Queue
           </h1>
           <div className="flex items-center gap-2 mt-2">
-            <Clock className="w-4 h-4 text-text-muted" />
             <span className="text-sm text-text-secondary">
-              {stats?.queue.total ?? 0} active alerts
-              {stats?.queue.urgent ? (
+              {alerts.length} active alert{alerts.length !== 1 ? "s" : ""}
+              {urgentAlerts.length > 0 && (
                 <span className="text-danger ml-2 font-medium">
-                  • {stats.queue.urgent} urgent
+                  • {urgentAlerts.length} urgent
                 </span>
-              ) : null}
+              )}
             </span>
             <button
               onClick={() => fetchData(true)}
               disabled={refreshing}
               className="flex items-center gap-1 text-sm text-accent-counselor-light hover:text-accent-counselor transition-colors disabled:opacity-50"
             >
-              <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`}
+              />
               <span>Refresh</span>
             </button>
           </div>
         </div>
-
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl border transition-colors ${
-            showFilters || hasActiveFilters
-              ? "bg-accent-counselor/10 border-accent-counselor/30 text-accent-counselor-light"
-              : "bg-bg-elevated border-border-subtle text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          <Filter className="w-4 h-4" />
-          <span className="text-sm font-medium">Filters</span>
-          {hasActiveFilters && (
-            <span className="w-2 h-2 rounded-full bg-accent-counselor" />
-          )}
-        </button>
       </motion.div>
+
+      {/* Urgent Alert Banner */}
+      <AnimatePresence>
+        {urgentAlerts.length > 0 && (
+          <UrgentAlertBanner 
+            urgentAlerts={urgentAlerts} 
+            onViewUrgent={() => setActiveFilter("RED")} 
+          />
+        )}
+      </AnimatePresence>
 
       {/* Stats Bar */}
       <CounselorStatsBar stats={stats} loading={loading} />
 
-      {/* Filters Panel */}
-      {showFilters && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          className="p-4 rounded-2xl bg-bg-card border border-border-subtle"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-text-primary">Filter Alerts</h3>
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="text-xs text-accent-counselor-light hover:text-accent-counselor"
-              >
-                Clear all
-              </button>
-            )}
-          </div>
+      {/* Filter Tabs */}
+      <AlertFilterTabs
+        activeFilter={activeFilter}
+        onChange={setActiveFilter}
+        counts={filterCounts}
+      />
 
-          <div className="flex flex-wrap gap-2">
-            <span className="text-sm text-text-secondary">Tier:</span>
-            {(["RED", "ORANGE", "YELLOW"] as AlertTier[]).map((tier) => (
-              <button
-                key={tier}
-                onClick={() => toggleTierFilter(tier)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  filters.tier?.includes(tier)
-                    ? "bg-accent-counselor/20 text-accent-counselor-light border border-accent-counselor/30"
-                    : "bg-bg-elevated text-text-secondary border border-border-subtle hover:border-border-default"
-                }`}
-              >
-                {tier}
-              </button>
-            ))}
-          </div>
-        </motion.div>
+      {/* Alert Queue */}
+      <AlertQueue
+        alerts={alerts}
+        filter={activeFilter}
+        isLoading={loading}
+      />
+
+      {/* Helpful Resources & FAQs */}
+      {!loading && (
+        <CounselorResources />
       )}
 
-      {/* Alerts Grid */}
-      {alerts.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {alerts.map((alert, index) => (
-            <AlertCard key={alert.id} alert={alert} index={index} />
-          ))}
-        </div>
-      ) : (
+      {/* Footer Info */}
+      {!loading && alerts.length > 0 && (
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-16"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="flex items-center justify-between pt-6 border-t border-border-subtle"
         >
-          <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-bg-elevated flex items-center justify-center border border-border-subtle">
-            <Inbox className="w-10 h-10 text-text-muted" />
-          </div>
-          <h3 className="text-xl font-bold font-sora text-text-primary mb-2">
-            All Caught Up!
-          </h3>
-          <p className="text-text-secondary mb-6">
-            {hasActiveFilters
-              ? "No alerts match your current filters"
-              : "No active alerts requiring attention"}
+          <p className="text-xs text-text-muted">
+            Alerts are sorted by urgency (RED → ORANGE → YELLOW)
           </p>
-          {hasActiveFilters && (
-            <button
-              onClick={clearFilters}
-              className="px-6 py-2 rounded-xl bg-gradient-counselor text-white font-medium shadow-glow-counselor hover:opacity-90 transition-opacity"
-            >
-              Clear Filters
-            </button>
-          )}
+          <p className="text-xs text-text-muted">
+            Auto-refreshes every 60 seconds
+          </p>
         </motion.div>
       )}
     </div>

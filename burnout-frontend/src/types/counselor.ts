@@ -87,6 +87,7 @@ export interface Alert {
   riskIndicators: RiskIndicators;
   requiresResponseBy?: string;
   createdAt: string;
+  resolvedAt?: string;
   updatedAt: string;
   assignedTo?: string;
   assignedToName?: string;

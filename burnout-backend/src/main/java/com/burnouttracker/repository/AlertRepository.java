@@ -6,6 +6,7 @@ import com.burnouttracker.model.enums.AlertType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -15,8 +16,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Repository for Alert entity
+ * Provides queries for counselor dashboard alert queue and history
+ */
 @Repository
-public interface AlertRepository extends JpaRepository<Alert, UUID> {
+public interface AlertRepository extends JpaRepository<Alert, UUID>, JpaSpecificationExecutor<Alert> {
 
     /**
      * Find all alerts with a specific status, ordered by creation date descending
@@ -24,14 +29,38 @@ public interface AlertRepository extends JpaRepository<Alert, UUID> {
     List<Alert> findByStatusOrderByCreatedAtDesc(AlertStatus status);
 
     /**
-     * Find alerts by type and status
+     * Find active alerts sorted by urgency (RED first, then ORANGE, then YELLOW)
+     * Used for counselor alert queue display
      */
-    List<Alert> findByAlertTypeAndStatus(AlertType type, AlertStatus status);
+    @Query("""
+        SELECT a FROM Alert a 
+        WHERE a.status IN :statuses 
+        ORDER BY 
+          CASE a.alertType 
+            WHEN 'RED' THEN 1 
+            WHEN 'ORANGE' THEN 2 
+            WHEN 'YELLOW' THEN 3 
+          END ASC,
+          a.createdAt DESC
+    """)
+    List<Alert> findByStatusInOrderByAlertTypeSeverityDescCreatedAtDesc(
+        @Param("statuses") List<AlertStatus> statuses
+    );
 
     /**
-     * Find all alerts for a specific user
+     * Find all alerts for a specific user (student)
      */
     List<Alert> findByUserIdOrderByCreatedAtDesc(UUID userId);
+
+    /**
+     * Find the single active alert for a user (if exists)
+     */
+    @Query("""
+        SELECT a FROM Alert a 
+        WHERE a.userId = :userId AND a.status = 'ACTIVE'
+        ORDER BY a.createdAt DESC
+    """)
+    Optional<Alert> findActiveAlertByUserId(@Param("userId") UUID userId);
 
     /**
      * Count alerts by status
@@ -39,50 +68,55 @@ public interface AlertRepository extends JpaRepository<Alert, UUID> {
     long countByStatus(AlertStatus status);
 
     /**
-     * Find active alerts by type with custom query for performance
-     */
-    @Query("SELECT a FROM Alert a WHERE a.alertType = :type AND a.status = 'ACTIVE' ORDER BY a.createdAt DESC")
-    List<Alert> findActiveAlertsByType(@Param("type") AlertType type);
-
-    /**
-     * Find all active alerts ordered by urgency (RED first, then ORANGE, then YELLOW)
-     */
-    @Query("""
-        SELECT a FROM Alert a 
-        WHERE a.status = 'ACTIVE' 
-        ORDER BY 
-            CASE a.alertType 
-                WHEN 'RED' THEN 0 
-                WHEN 'ORANGE' THEN 1 
-                WHEN 'YELLOW' THEN 2 
-            END,
-            a.createdAt DESC
-    """)
-    List<Alert> findAllActiveAlertsOrderedByUrgency();
-
-    /**
-     * Count active alerts by type
+     * Count alerts by type and status
      */
     long countByAlertTypeAndStatus(AlertType type, AlertStatus status);
 
     /**
-     * Find resolved alerts with pagination
+     * Find alerts resolved after a specific date (for "resolved today" count)
      */
-    @Query("SELECT a FROM Alert a WHERE a.status = 'RESOLVED' ORDER BY a.resolvedAt DESC")
-    Page<Alert> findResolvedAlerts(Pageable pageable);
+    List<Alert> findByStatusAndResolvedAtAfter(AlertStatus status, LocalDateTime after);
 
     /**
-     * Count resolved alerts today
+     * Find resolved alerts with pagination for history view
      */
     @Query("""
-        SELECT COUNT(a) FROM Alert a 
+        SELECT a FROM Alert a 
         WHERE a.status = 'RESOLVED' 
-        AND a.resolvedAt >= CURRENT_DATE
+        ORDER BY a.resolvedAt DESC
     """)
-    long countResolvedToday();
+    Page<Alert> findByStatusOrderByResolvedAtDesc(AlertStatus status, Pageable pageable);
 
     /**
-     * Calculate average resolution time in hours
+     * Check if user has an active alert (prevent duplicate alerts)
+     */
+    @Query("""
+        SELECT COUNT(a) > 0 FROM Alert a 
+        WHERE a.userId = :userId AND a.status = 'ACTIVE'
+    """)
+    boolean existsActiveAlertForUser(@Param("userId") UUID userId);
+
+    /**
+     * Find the most recent YELLOW alert for a user (for 7-day cooldown check)
+     */
+    @Query("""
+        SELECT a FROM Alert a 
+        WHERE a.userId = :userId AND a.alertType = 'YELLOW'
+        ORDER BY a.createdAt DESC
+    """)
+    Optional<Alert> findMostRecentYellowAlertByUserId(@Param("userId") UUID userId);
+
+    /**
+     * Count distinct users with active alerts (for stats)
+     */
+    @Query("""
+        SELECT COUNT(DISTINCT a.userId) FROM Alert a 
+        WHERE a.status = 'ACTIVE'
+    """)
+    long countDistinctUsersWithActiveAlerts();
+
+    /**
+     * Calculate average resolution time in hours for resolved alerts
      */
     @Query("""
         SELECT AVG(CAST(TIMESTAMPDIFF(HOUR, a.createdAt, a.resolvedAt) AS double)) 
@@ -92,33 +126,13 @@ public interface AlertRepository extends JpaRepository<Alert, UUID> {
     Double getAverageResolutionHours();
 
     /**
-     * Check if user has an active alert
-     */
-    @Query("SELECT COUNT(a) > 0 FROM Alert a WHERE a.user.id = :userId AND a.status = 'ACTIVE'")
-    boolean hasActiveAlert(@Param("userId") UUID userId);
-
-    /**
-     * Find alerts created in date range
+     * Find alerts resolved in the last N days for stats
      */
     @Query("""
         SELECT a FROM Alert a 
-        WHERE a.createdAt BETWEEN :start AND :end 
-        ORDER BY a.createdAt DESC
+        WHERE a.status = 'RESOLVED' 
+        AND a.resolvedAt >= :since
+        ORDER BY a.resolvedAt DESC
     """)
-    List<Alert> findAlertsInDateRange(
-        @Param("start") LocalDateTime start,
-        @Param("end") LocalDateTime end
-    );
-
-    /**
-     * Count urgent active alerts (RED type)
-     */
-    @Query("SELECT COUNT(a) FROM Alert a WHERE a.alertType = 'RED' AND a.status = 'ACTIVE'")
-    long countUrgentActiveAlerts();
-
-    /**
-     * Find alerts assigned to a specific counselor
-     */
-    @Query("SELECT a FROM Alert a WHERE a.counselorId = :counselorId AND a.status IN ('ACTIVE', 'ACKNOWLEDGED')")
-    List<Alert> findByCounselorId(@Param("counselorId") UUID counselorId);
+    List<Alert> findResolvedAlertsSince(@Param("since") LocalDateTime since, Pageable pageable);
 }

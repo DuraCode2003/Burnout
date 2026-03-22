@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
+import logo from '@/assets/logo.png';
 
 interface RegisterFormData {
   firstName: string;
@@ -150,21 +152,21 @@ export default function RegisterPage() {
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.3 }}
           >
-            <div className="relative w-24 h-24">
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                <defs>
-                  <linearGradient id="logoGradientReg" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#6366f1" />
-                    <stop offset="100%" stopColor="#8b5cf6" />
-                  </linearGradient>
-                </defs>
-                <motion.circle cx="50" cy="50" r="45" fill="none" stroke="url(#logoGradientReg)" strokeWidth="2" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 2, delay: 0.5 }} />
-                <motion.circle cx="50" cy="50" r="15" fill="url(#logoGradientReg)" animate={{ scale: [1, 1.4, 1] }} transition={{ duration: 4, repeat: Infinity, delay: 1.5 }} />
-              </svg>
+            <div className="relative w-24 h-24 overflow-hidden rounded-2xl shadow-glow-indigo-lg border border-border-subtle">
+              <Image 
+                src={logo} 
+                alt="Burnout Tracker Logo" 
+                fill 
+                className="object-cover"
+              />
+              {/* Scanning Light Effect */}
+              <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
+                <div className="w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-25deg] animate-scanning-light shadow-[0_0_20px_rgba(255,255,255,0.1)]" />
+              </div>
             </div>
           </motion.div>
 
-          <motion.h1 className="text-4xl font-bold font-sora text-text-primary mb-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+          <motion.h1 className="text-3xl lg:text-4xl font-bold font-sora text-text-primary mb-3 whitespace-nowrap" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
             Burnout Tracker
           </motion.h1>
 

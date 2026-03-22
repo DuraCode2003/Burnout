@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import Image from 'next/image';
+import logo from '@/assets/logo.png';
 
 interface LoginFormData {
   email: string;
@@ -31,8 +33,10 @@ export default function LoginPage() {
 
       if (response.consentRequired) {
         router.push('/consent');
-      } else if (response.role === 'ADMIN' || response.role === 'COUNSELOR') {
+      } else if (response.role === 'ADMIN') {
         router.push('/admin');
+      } else if (response.role === 'COUNSELOR') {
+        router.push('/counselor');
       } else {
         router.push('/dashboard');
       }
@@ -120,73 +124,23 @@ export default function LoginPage() {
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.3 }}
           >
-            <div className="relative w-24 h-24">
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                <defs>
-                  <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#6366f1" />
-                    <stop offset="100%" stopColor="#8b5cf6" />
-                  </linearGradient>
-                </defs>
-
-                <motion.circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="url(#logoGradient)"
-                  strokeWidth="2"
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ duration: 2, ease: 'easeInOut', delay: 0.5 }}
-                />
-
-                <motion.circle
-                  cx="50"
-                  cy="50"
-                  r="35"
-                  fill="none"
-                  stroke="rgba(99,102,241,0.5)"
-                  strokeWidth="2"
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ duration: 2, ease: 'easeInOut', delay: 0.7 }}
-                />
-
-                <motion.circle
-                  cx="50"
-                  cy="50"
-                  r="25"
-                  fill="none"
-                  stroke="rgba(99,102,241,0.3)"
-                  strokeWidth="2"
-                  initial={{ pathLength: 0, opacity: 0 }}
-                  animate={{ pathLength: 1, opacity: 1 }}
-                  transition={{ duration: 2, ease: 'easeInOut', delay: 0.9 }}
-                />
-
-                {/* Breathing animation */}
-                <motion.circle
-                  cx="50"
-                  cy="50"
-                  r="15"
-                  fill="url(#logoGradient)"
-                  initial={{ scale: 1, opacity: 0.6 }}
-                  animate={{ scale: 1.4, opacity: 1 }}
-                  transition={{
-                    duration: 4,
-                    repeat: Infinity,
-                    ease: 'easeInOut',
-                    delay: 1.5,
-                  }}
-                />
-              </svg>
+            <div className="relative w-24 h-24 overflow-hidden rounded-2xl shadow-glow-indigo-lg border border-border-subtle group">
+              <Image 
+                src={logo} 
+                alt="Burnout Tracker Logo" 
+                fill 
+                className="object-cover"
+              />
+              {/* Scanning Light Effect */}
+              <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
+                <div className="w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-25deg] animate-scanning-light shadow-[0_0_20px_rgba(255,255,255,0.1)]" />
+              </div>
             </div>
           </motion.div>
 
           {/* Title */}
           <motion.h1
-            className="text-4xl font-bold font-sora text-text-primary mb-3"
+            className="text-3xl lg:text-4xl font-bold font-sora text-text-primary mb-3 whitespace-nowrap"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
@@ -252,34 +206,17 @@ export default function LoginPage() {
             animate={{ scale: 1 }}
             transition={{ type: 'spring', delay: 0.2 }}
           >
-            <div className="w-16 h-16 mx-auto">
-              <svg viewBox="0 0 100 100" className="w-full h-full">
-                <defs>
-                  <linearGradient id="logoGradientMobile" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stopColor="#6366f1" />
-                    <stop offset="100%" stopColor="#8b5cf6" />
-                  </linearGradient>
-                </defs>
-                <motion.circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="url(#logoGradientMobile)"
-                  strokeWidth="2"
-                  initial={{ pathLength: 0 }}
-                  animate={{ pathLength: 1 }}
-                  transition={{ duration: 1.5 }}
-                />
-                <motion.circle
-                  cx="50"
-                  cy="50"
-                  r="15"
-                  fill="url(#logoGradientMobile)"
-                  animate={{ scale: [1, 1.4, 1] }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                />
-              </svg>
+            <div className="relative w-16 h-16 mx-auto overflow-hidden rounded-2xl shadow-glow-indigo border border-border-subtle">
+              <Image 
+                src={logo} 
+                alt="Burnout Tracker Logo" 
+                fill 
+                className="object-cover"
+              />
+              {/* Scanning Light Effect */}
+              <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
+                <div className="w-1/2 h-full bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-[-25deg] animate-scanning-light" />
+              </div>
             </div>
           </motion.div>
 

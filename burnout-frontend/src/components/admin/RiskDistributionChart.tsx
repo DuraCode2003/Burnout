@@ -40,7 +40,7 @@ const CustomTooltip = ({
 }) => {
   if (active && payload && payload.length) {
     const data = payload[0];
-    const percent = ((data.value / (data.payload.high + data.payload.medium + data.payload.low)) * 100).toFixed(1);
+    const percent = data.payload.percent.toFixed(1);
 
     return (
       <motion.div

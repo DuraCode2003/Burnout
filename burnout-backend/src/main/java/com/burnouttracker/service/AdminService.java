@@ -1,7 +1,8 @@
 package com.burnouttracker.service;
 
+import com.burnouttracker.dto.response.UserManagementDTO;
 import com.burnouttracker.dto.response.admin.*;
-import com.burnouttracker.model.enums.RiskLevel;
+import com.burnouttracker.model.enums.Role;
 import com.burnouttracker.repository.BurnoutScoreRepository;
 import com.burnouttracker.repository.MoodEntryRepository;
 import com.burnouttracker.repository.UserRepository;
@@ -9,14 +10,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class AdminService {
@@ -24,16 +24,25 @@ public class AdminService {
     private final UserRepository userRepository;
     private final BurnoutScoreRepository burnoutScoreRepository;
     private final MoodEntryRepository moodEntryRepository;
+    private final AdminAnalyticsService analyticsService;
+    private final AdminStatsMapper statsMapper;
+    private final org.springframework.security.crypto.password.PasswordEncoder passwordEncoder;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter WEEK_LABEL_FORMATTER = DateTimeFormatter.ofPattern("MMM d");
 
     public AdminService(UserRepository userRepository,
                         BurnoutScoreRepository burnoutScoreRepository,
-                        MoodEntryRepository moodEntryRepository) {
+                        MoodEntryRepository moodEntryRepository,
+                        AdminAnalyticsService analyticsService,
+                        AdminStatsMapper statsMapper,
+                        org.springframework.security.crypto.password.PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.burnoutScoreRepository = burnoutScoreRepository;
         this.moodEntryRepository = moodEntryRepository;
+        this.analyticsService = analyticsService;
+        this.statsMapper = statsMapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Transactional(readOnly = true)
@@ -47,22 +56,22 @@ public class AdminService {
         long activeThisWeek = userRepository.countDistinctActiveThisWeek(weekAgo);
 
         double checkinRatePercent = totalStudents > 0
-                ? round((activeThisWeek * 100.0) / totalStudents, 2)
+                ? statsMapper.round((activeThisWeek * 100.0) / totalStudents, 2)
                 : 0.0;
 
-        Map<String, Object> burnoutStats = getLatestBurnoutStats();
+        Map<String, Object> burnoutStats = analyticsService.getLatestBurnoutStats();
         Double avgBurnoutScore = (Double) burnoutStats.get("avgScore");
         Long highRiskCount = (Long) burnoutStats.get("highCount");
         Long mediumRiskCount = (Long) burnoutStats.get("mediumCount");
         Long lowRiskCount = (Long) burnoutStats.get("lowCount");
 
-        Map<String, Double> moodStats = getMoodStatsForPeriod(weekAgo);
+        Map<String, Double> moodStats = analyticsService.getMoodStatsForPeriod(weekAgo);
         Double avgMoodScore = moodStats.get("avgMood");
         Double avgSleepHours = moodStats.get("avgSleep");
 
         long activeLastWeek = userRepository.countDistinctActiveThisWeek(twoWeeksAgo);
         double trendVsLastWeek = activeLastWeek > 0
-                ? round(((activeThisWeek - activeLastWeek) * 100.0) / activeLastWeek, 2)
+                ? statsMapper.round(((activeThisWeek - activeLastWeek) * 100.0) / activeLastWeek, 2)
                 : 0.0;
 
         return CampusStatsDTO.builder()
@@ -87,26 +96,7 @@ public class AdminService {
         List<DepartmentStatsDTO> result = new ArrayList<>();
 
         for (Object[] row : deptData) {
-            String department = row[0] != null ? row[0].toString() : "Unassigned";
-            Long studentCount = ((Number) row[1]).longValue();
-            Double avgBurnout = row[2] != null ? ((Number) row[2]).doubleValue() : 0.0;
-            Long highRisk = ((Number) row[3]).longValue();
-            Long mediumRisk = ((Number) row[4]).longValue();
-            Long lowRisk = ((Number) row[5]).longValue();
-            Long activeCount = row[6] != null ? ((Number) row[6]).longValue() : 0L;
-
-            String dominantRisk = determineDominantRisk(highRisk, mediumRisk, lowRisk);
-            double checkinRate = studentCount > 0 ? round((activeCount * 100.0) / studentCount, 2) : 0.0;
-            String trend = determineTrend(avgBurnout);
-
-            result.add(DepartmentStatsDTO.builder()
-                    .department(department)
-                    .studentCount(studentCount)
-                    .avgBurnoutScore(round(avgBurnout, 2))
-                    .riskLevel(dominantRisk)
-                    .checkinRate(checkinRate)
-                    .trend(trend)
-                    .build());
+            result.add(statsMapper.mapToDepartmentStatsDTO(row));
         }
 
         result.sort(Comparator.comparingLong(DepartmentStatsDTO::getStudentCount).reversed());
@@ -116,15 +106,15 @@ public class AdminService {
     @Transactional(readOnly = true)
     @PreAuthorize("hasRole('ADMIN')")
     public RiskDistributionDTO getRiskDistribution() {
-        Map<String, Long> currentDistribution = getCurrentRiskDistribution();
-        Long high = currentDistribution.get("high");
-        Long medium = currentDistribution.get("medium");
-        Long low = currentDistribution.get("low");
-        Long total = high + medium + low;
+        Map<String, Long> currentDistribution = analyticsService.getCurrentRiskDistribution();
+        Long high = currentDistribution.getOrDefault("high", 0L);
+        Long medium = currentDistribution.getOrDefault("medium", 0L);
+        Long low = currentDistribution.getOrDefault("low", 0L);
+        long total = (high != null ? high : 0L) + (medium != null ? medium : 0L) + (low != null ? low : 0L);
 
-        double highPercent = total > 0 ? round((high * 100.0) / total, 2) : 0.0;
-        double mediumPercent = total > 0 ? round((medium * 100.0) / total, 2) : 0.0;
-        double lowPercent = total > 0 ? round((low * 100.0) / total, 2) : 0.0;
+        double highPercent = total > 0 ? statsMapper.round(((high != null ? high : 0L) * 100.0) / total, 2) : 0.0;
+        double mediumPercent = total > 0 ? statsMapper.round(((medium != null ? medium : 0L) * 100.0) / total, 2) : 0.0;
+        double lowPercent = total > 0 ? statsMapper.round(((low != null ? low : 0L) * 100.0) / total, 2) : 0.0;
 
         List<RiskDistributionDTO.WeeklyRiskHistoryDTO> weeklyHistory = getWeeklyRiskHistory(8);
 
@@ -151,20 +141,17 @@ public class AdminService {
             LocalDateTime startDateTime = weekStart.atStartOfDay();
             LocalDateTime endDateTime = weekEnd.atTime(23, 59, 59);
 
-            String weekLabel = i == 0 ? "Current Week" : "Week " + (weeks - i);
-
             Double avgBurnout = burnoutScoreRepository.getWeeklyAverageBurnout(startDateTime, endDateTime);
-            Map<String, Double> moodStats = getMoodStatsForPeriodInRange(startDateTime, endDateTime);
-
+            Map<String, Double> moodStats = analyticsService.getMoodStatsForPeriodInRange(startDateTime, endDateTime);
             Long checkinCount = moodEntryRepository.countCheckinsInRange(startDateTime, endDateTime);
 
-            result.add(WeeklyTrendDTO.builder()
-                    .weekLabel(weekLabel)
-                    .avgBurnoutScore(avgBurnout != null ? round(avgBurnout, 2) : 0.0)
-                    .avgMoodScore(moodStats.get("avgMood") != null ? round(moodStats.get("avgMood"), 2) : 0.0)
-                    .avgSleepHours(moodStats.get("avgSleep") != null ? round(moodStats.get("avgSleep"), 2) : 0.0)
-                    .checkinCount(checkinCount != null ? checkinCount : 0L)
-                    .build());
+            WeeklyTrendDTO dto = statsMapper.mapToWeeklyTrendDTO(weekStart, weekEnd, avgBurnout != null ? avgBurnout : 0.0);
+            dto.setWeekLabel(i == 0 ? "Current Week" : "Week " + (weeks - i));
+            dto.setAvgMoodScore(moodStats.get("avgMood") != null ? statsMapper.round(moodStats.get("avgMood"), 2) : 0.0);
+            dto.setAvgSleepHours(moodStats.get("avgSleep") != null ? statsMapper.round(moodStats.get("avgSleep"), 2) : 0.0);
+            dto.setCheckinCount(checkinCount != null ? checkinCount : 0L);
+
+            result.add(dto);
         }
 
         return result;
@@ -184,7 +171,7 @@ public class AdminService {
 
             Long checkinCount = moodEntryRepository.countCheckinsInRange(startOfDay, endOfDay);
             double participationPercent = totalStudents > 0
-                    ? round((checkinCount * 100.0) / totalStudents, 2)
+                    ? statsMapper.round((checkinCount * 100.0) / totalStudents, 2)
                     : 0.0;
 
             result.add(DailyCheckinDTO.builder()
@@ -202,7 +189,6 @@ public class AdminService {
     public List<HeatmapDataPoint> getHeatmapData() {
         List<HeatmapDataPoint> heatmapData = new ArrayList<>();
         LocalDate today = LocalDate.now();
-        List<Object[]> deptData = userRepository.countStudentsByDepartment();
 
         for (int i = 7; i >= 0; i--) {
             LocalDate weekStart = today.minusWeeks(i).with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
@@ -210,7 +196,7 @@ public class AdminService {
             LocalDateTime startDateTime = weekStart.atStartOfDay();
             LocalDateTime endDateTime = weekEnd.atTime(23, 59, 59);
 
-            String weekLabel = weekStart.format(DateTimeFormatter.ofPattern("MMM d"));
+            String weekLabel = weekStart.format(WEEK_LABEL_FORMATTER);
 
             List<Object[]> deptScores = burnoutScoreRepository.getDepartmentScoresInRange(startDateTime, endDateTime);
 
@@ -223,7 +209,7 @@ public class AdminService {
                         .department(department)
                         .week("Week " + (8 - i))
                         .weekLabel(weekLabel)
-                        .avgScore(round(avgScore, 2))
+                        .avgScore(statsMapper.round(avgScore, 2))
                         .studentCount(studentCount.intValue())
                         .build());
             }
@@ -255,75 +241,6 @@ public class AdminService {
         return csv.toString().getBytes();
     }
 
-    private Map<String, Object> getLatestBurnoutStats() {
-        List<Object[]> results = burnoutScoreRepository.getLatestBurnoutStatsPerUser();
-        
-        double sum = 0;
-        long count = 0;
-        long highCount = 0;
-        long mediumCount = 0;
-        long lowCount = 0;
-
-        for (Object[] row : results) {
-            double score = ((Number) row[0]).doubleValue();
-            String riskLevelStr = row[1].toString();
-            
-            sum += score;
-            count++;
-
-            RiskLevel riskLevel = RiskLevel.valueOf(riskLevelStr);
-            switch (riskLevel) {
-                case HIGH -> highCount++;
-                case MEDIUM -> mediumCount++;
-                case LOW -> lowCount++;
-            }
-        }
-
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("avgScore", count > 0 ? round(sum / count, 2) : 0.0);
-        stats.put("highCount", highCount);
-        stats.put("mediumCount", mediumCount);
-        stats.put("lowCount", lowCount);
-        return stats;
-    }
-
-    private Map<String, Double> getMoodStatsForPeriod(LocalDateTime startDate) {
-        Double avgMood = moodEntryRepository.getAverageMoodForPeriod(startDate);
-        Double avgSleep = moodEntryRepository.getAverageSleepForPeriod(startDate);
-
-        Map<String, Double> stats = new HashMap<>();
-        stats.put("avgMood", avgMood != null ? round(avgMood, 2) : 0.0);
-        stats.put("avgSleep", avgSleep != null ? round(avgSleep, 2) : 0.0);
-        return stats;
-    }
-
-    private Map<String, Double> getMoodStatsForPeriodInRange(LocalDateTime startDate, LocalDateTime endDate) {
-        Double avgMood = moodEntryRepository.getAverageMoodInRange(startDate, endDate);
-        Double avgSleep = moodEntryRepository.getAverageSleepInRange(startDate, endDate);
-
-        Map<String, Double> stats = new HashMap<>();
-        stats.put("avgMood", avgMood != null ? round(avgMood, 2) : 0.0);
-        stats.put("avgSleep", avgSleep != null ? round(avgSleep, 2) : 0.0);
-        return stats;
-    }
-
-    private Map<String, Long> getCurrentRiskDistribution() {
-        List<Object[]> results = burnoutScoreRepository.getLatestRiskDistribution();
-        
-        Map<String, Long> distribution = new HashMap<>();
-        distribution.put("high", 0L);
-        distribution.put("medium", 0L);
-        distribution.put("low", 0L);
-
-        for (Object[] row : results) {
-            String riskLevel = row[0].toString();
-            Long count = ((Number) row[1]).longValue();
-            distribution.put(riskLevel.toLowerCase(), count);
-        }
-
-        return distribution;
-    }
-
     private List<RiskDistributionDTO.WeeklyRiskHistoryDTO> getWeeklyRiskHistory(int weeks) {
         List<RiskDistributionDTO.WeeklyRiskHistoryDTO> history = new ArrayList<>();
         LocalDate today = LocalDate.now();
@@ -336,7 +253,7 @@ public class AdminService {
 
             String weekLabel = weekStart.format(WEEK_LABEL_FORMATTER);
             
-            Map<String, Long> weeklyDist = getWeeklyRiskDistribution(startDateTime, endDateTime);
+            Map<String, Long> weeklyDist = analyticsService.getWeeklyRiskDistribution(startDateTime, endDateTime);
 
             history.add(RiskDistributionDTO.WeeklyRiskHistoryDTO.builder()
                     .week(weekLabel)
@@ -349,38 +266,72 @@ public class AdminService {
         return history;
     }
 
-    private Map<String, Long> getWeeklyRiskDistribution(LocalDateTime startDate, LocalDateTime endDate) {
-        List<Object[]> results = burnoutScoreRepository.getRiskDistributionInRange(startDate, endDate);
-        
-        Map<String, Long> distribution = new HashMap<>();
-        distribution.put("high", 0L);
-        distribution.put("medium", 0L);
-        distribution.put("low", 0L);
+    @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<UserManagementDTO> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(user -> UserManagementDTO.builder()
+                        .id(user.getId())
+                        .name(user.getName())
+                        .email(user.getEmail())
+                        .role(user.getRole())
+                        .department(user.getDepartment())
+                        .isActive(user.getIsActive())
+                        .createdAt(user.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+    }
 
-        for (Object[] row : results) {
-            String riskLevel = row[0].toString();
-            Long count = ((Number) row[1]).longValue();
-            distribution.put(riskLevel.toLowerCase(), count);
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserManagementDTO updateUserRole(UUID userId, Role newRole) {
+        com.burnouttracker.model.User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        user.setRole(newRole);
+        com.burnouttracker.model.User savedUser = userRepository.save(user);
+
+        return UserManagementDTO.builder()
+                .id(savedUser.getId())
+                .name(savedUser.getName())
+                .email(savedUser.getEmail())
+                .role(savedUser.getRole())
+                .department(savedUser.getDepartment())
+                .isActive(savedUser.getIsActive())
+                .createdAt(savedUser.getCreatedAt())
+                .build();
+    }
+
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
+    public UserManagementDTO createStaffUser(com.burnouttracker.dto.request.CreateStaffRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new IllegalArgumentException("Email already registered: " + request.getEmail());
         }
 
-        return distribution;
-    }
+        if (request.getRole() != Role.ADMIN && request.getRole() != Role.COUNSELOR) {
+            throw new IllegalArgumentException("Only ADMIN or COUNSELOR roles can be created via this endpoint");
+        }
 
-    private String determineDominantRisk(Long high, Long medium, Long low) {
-        if (high >= medium && high >= low) return "HIGH";
-        if (medium >= high && medium >= low) return "MEDIUM";
-        return "LOW";
-    }
+        com.burnouttracker.model.User user = com.burnouttracker.model.User.builder()
+                .name(request.getName())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role(request.getRole())
+                .department(request.getDepartment())
+                .isActive(true)
+                .build();
 
-    private String determineTrend(Double avgBurnout) {
-        if (avgBurnout >= 70) return "up";
-        if (avgBurnout >= 40) return "stable";
-        return "down";
-    }
+        com.burnouttracker.model.User savedUser = userRepository.save(user);
 
-    private double round(double value, int scale) {
-        if (Double.isNaN(value)) return 0.0;
-        BigDecimal bd = BigDecimal.valueOf(value);
-        return bd.setScale(scale, RoundingMode.HALF_UP).doubleValue();
+        return UserManagementDTO.builder()
+                .id(savedUser.getId())
+                .name(savedUser.getName())
+                .email(savedUser.getEmail())
+                .role(savedUser.getRole())
+                .department(savedUser.getDepartment())
+                .isActive(savedUser.getIsActive())
+                .createdAt(savedUser.getCreatedAt())
+                .build();
     }
 }

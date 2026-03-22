@@ -4,23 +4,30 @@ import React from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import Image from "next/image";
+import logo from "@/assets/logo.png";
 
 export function Navbar() {
   const router = useRouter();
   const { user, logout } = useAuth();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push("/login");
   };
 
   return (
     <nav className="bg-bg-surface border-b border-border-subtle sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-accent flex items-center justify-center shadow-glow-indigo-sm">
-              <span className="text-white font-bold text-lg">B</span>
+            <div className="relative w-12 h-12 overflow-hidden rounded-xl shadow-glow-indigo-sm border border-border-subtle">
+              <Image 
+                src={logo} 
+                alt="Burnout Tracker Logo" 
+                fill 
+                className="object-cover"
+              />
             </div>
             <h1 className="text-xl font-bold font-sora tracking-tight text-text-primary">
               Burnout Tracker

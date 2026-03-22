@@ -8,6 +8,7 @@ import { BurnoutScoreCard } from '@/components/dashboard/BurnoutScoreCard';
 import { MoodChart } from '@/components/dashboard/MoodChart';
 import { DailyTipCard } from '@/components/dashboard/DailyTipCard';
 import { StatusCard } from '@/components/dashboard/StatusCard';
+import { HelpSupportCard } from '@/components/dashboard/HelpSupportCard';
 import { api } from '@/services/api';
 import { getTimeBasedGreeting, formatDate } from '@/utils/helpers';
 import type { RiskLevel } from '@/types';
@@ -143,7 +144,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto">
+    <div className="w-full">
             <motion.header
               className="mb-6 xs:mb-8"
               initial={{ opacity: 0, y: -20 }}
@@ -219,7 +220,7 @@ export default function DashboardPage() {
                   <div className="md:col-span-2 lg:col-span-3">
                     <MoodChart data={data.moodHistory} />
                   </div>
-                  <div className="md:col-span-2 lg:col-span-3">
+                  <div className="md:col-span-2 lg:col-span-2">
                     <DailyTipCard tip={tip?.text || 'Stay mindful and take care of yourself.'} category={tip?.category || 'mindfulness'} />
                   </div>
                 </motion.div>

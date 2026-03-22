@@ -3,178 +3,167 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  Phone,
   CheckCircle,
   ArrowUpCircle,
-  MessageSquare,
-  Phone,
-  Mail,
-  UserCheck,
   Loader2,
+  X,
+  AlertTriangle,
 } from "lucide-react";
-import type { Alert, AlertStatus } from "@/types/counselor";
+import type { Alert } from "@/types/counselor";
+import toast from "react-hot-toast";
 
 interface ActionButtonsProps {
   alert: Alert;
-  onResolve: (notes?: string) => Promise<void>;
-  onEscalate: (reason: string, priority: "HIGH" | "URGENT") => Promise<void>;
-  onContact: (method: "EMAIL" | "PHONE" | "MESSAGE" | "IN_PERSON", notes?: string) => Promise<void>;
-  onSendMessage: (message: string) => Promise<void>;
+  onContact: () => Promise<void>;
+  onResolve: (note: string) => Promise<void>;
+  onEscalate: (reason: string) => Promise<void>;
 }
 
 export function ActionButtons({
   alert,
+  onContact,
   onResolve,
   onEscalate,
-  onContact,
-  onSendMessage,
 }: ActionButtonsProps) {
-  const [loading, setLoading] = useState<string | null>(null);
-  const [showMessageModal, setShowMessageModal] = useState(false);
-  const [messageText, setMessageText] = useState("");
+  const [contacting, setContacting] = useState(false);
+  const [resolving, setResolving] = useState(false);
+  const [escalating, setEscalating] = useState(false);
+  const [showResolveModal, setShowResolveModal] = useState(false);
+  const [showEscalateModal, setShowEscalateModal] = useState(false);
+  const [resolveNote, setResolveNote] = useState("");
+  const [escalateReason, setEscalateReason] = useState("");
 
-  const isAssignedToMe = !!alert.assignedTo;
-  const canResolve = alert.status !== "RESOLVED";
-  const canEscalate = alert.status !== "ESCALATED" && alert.status !== "RESOLVED";
+  const isContacted = alert.actions.some(
+    (a) => a.actionType === "CONTACTED"
+  );
 
-  const handleAction = async (action: string, fn: () => Promise<void>) => {
-    setLoading(action);
+  const handleContact = async () => {
+    setContacting(true);
     try {
-      await fn();
+      await onContact();
+      toast.success("Contact logged successfully");
     } catch (error) {
-      console.error(`Action ${action} failed:`, error);
+      console.error("Failed to log contact:", error);
+      toast.error("Failed to log contact");
     } finally {
-      setLoading(null);
+      setContacting(false);
     }
   };
 
   const handleResolve = async () => {
-    await handleAction("resolve", () => onResolve());
+    if (!resolveNote.trim()) {
+      toast.error("Please add a resolution note");
+      return;
+    }
+
+    setResolving(true);
+    try {
+      await onResolve(resolveNote.trim());
+      toast.success("Alert resolved successfully");
+      setShowResolveModal(false);
+    } catch (error) {
+      console.error("Failed to resolve alert:", error);
+      toast.error("Failed to resolve alert");
+    } finally {
+      setResolving(false);
+    }
   };
 
   const handleEscalate = async () => {
-    const reason = prompt("Enter escalation reason:");
-    if (!reason) return;
-    const priority = alert.tier === "RED" ? "URGENT" : "HIGH";
-    await handleAction("escalate", () => onEscalate(reason, priority));
-  };
+    if (!escalateReason.trim()) {
+      toast.error("Please provide an escalation reason");
+      return;
+    }
 
-  const handleContact = async (method: "EMAIL" | "PHONE" | "MESSAGE" | "IN_PERSON") => {
-    const notes = prompt("Add notes about this contact (optional):") || undefined;
-    await handleAction("contact", () => onContact(method, notes));
-  };
-
-  const handleSendMessage = async () => {
-    if (!messageText.trim()) return;
-    await handleAction("send-message", () => onSendMessage(messageText));
-    setMessageText("");
-    setShowMessageModal(false);
+    setEscalating(true);
+    try {
+      await onEscalate(escalateReason.trim());
+      toast.success("Alert escalated to senior counselor");
+      setShowEscalateModal(false);
+    } catch (error) {
+      console.error("Failed to escalate alert:", error);
+      toast.error("Failed to escalate alert");
+    } finally {
+      setEscalating(false);
+    }
   };
 
   return (
     <div className="space-y-4">
-      {/* Primary Actions */}
-      <div className="grid grid-cols-2 gap-3">
-        {/* Resolve */}
-        {canResolve && (
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleResolve}
-            disabled={loading === "resolve"}
-            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-success/10 text-success border border-success/30 hover:bg-success/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading === "resolve" ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                <CheckCircle className="w-5 h-5" />
-                <span className="font-medium">Resolve</span>
-              </>
-            )}
-          </motion.button>
+      {/* Mark as Contacted */}
+      <motion.button
+        whileHover={{ scale: isContacted ? 1 : 1.02 }}
+        whileTap={{ scale: isContacted ? 1 : 0.98 }}
+        onClick={handleContact}
+        disabled={contacting || isContacted}
+        className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-medium transition-all duration-300 ${
+          isContacted
+            ? "bg-success/10 text-success border border-success/30 cursor-default"
+            : "bg-gradient-counselor text-white shadow-glow-counselor hover:opacity-90"
+        } disabled:opacity-50 disabled:cursor-not-allowed`}
+      >
+        {contacting ? (
+          <Loader2 className="w-5 h-5 animate-spin" />
+        ) : isContacted ? (
+          <>
+            <CheckCircle className="w-5 h-5" />
+            <span>Contacted {alert.actions.find(a => a.actionType === "CONTACTED") && `on ${new Date(alert.actions.find(a => a.actionType === "CONTACTED")!.timestamp).toLocaleDateString()}`}</span>
+          </>
+        ) : (
+          <>
+            <Phone className="w-5 h-5" />
+            <span>Mark as Contacted</span>
+          </>
         )}
+      </motion.button>
 
-        {/* Escalate */}
-        {canEscalate && (
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleEscalate}
-            disabled={loading === "escalate"}
-            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/30 hover:bg-purple-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading === "escalate" ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <>
-                <ArrowUpCircle className="w-5 h-5" />
-                <span className="font-medium">Escalate</span>
-              </>
-            )}
-          </motion.button>
+      {/* Resolve Alert */}
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => setShowResolveModal(true)}
+        disabled={resolving || alert.status === "RESOLVED"}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-success/10 text-success border border-success/30 hover:bg-success/20 font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {resolving ? (
+          <Loader2 className="w-5 h-5 animate-spin" />
+        ) : (
+          <>
+            <CheckCircle className="w-5 h-5" />
+            <span>Resolve Alert</span>
+          </>
         )}
-      </div>
+      </motion.button>
 
-      {/* Contact Options */}
-      <div className="pt-4 border-t border-border-subtle">
-        <h4 className="text-sm font-semibold text-text-primary mb-3">Contact Student</h4>
-        <div className="grid grid-cols-4 gap-2">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => handleContact("EMAIL")}
-            disabled={loading === "contact"}
-            className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-bg-elevated border border-border-subtle hover:bg-bg-card transition-colors disabled:opacity-50"
-          >
-            <Mail className="w-5 h-5 text-accent-counselor-light" />
-            <span className="text-xs text-text-secondary">Email</span>
-          </motion.button>
+      {/* Escalate to Senior */}
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={() => setShowEscalateModal(true)}
+        disabled={escalating || alert.status === "ESCALATED"}
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-bg-elevated text-text-secondary border border-border-subtle hover:text-warning hover:border-warning/30 font-medium transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {escalating ? (
+          <Loader2 className="w-5 h-5 animate-spin" />
+        ) : (
+          <>
+            <ArrowUpCircle className="w-5 h-5" />
+            <span>Escalate to Senior</span>
+          </>
+        )}
+      </motion.button>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => handleContact("PHONE")}
-            disabled={loading === "contact"}
-            className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-bg-elevated border border-border-subtle hover:bg-bg-card transition-colors disabled:opacity-50"
-          >
-            <Phone className="w-5 h-5 text-accent-counselor-light" />
-            <span className="text-xs text-text-secondary">Phone</span>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => setShowMessageModal(true)}
-            disabled={loading === "send-message"}
-            className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-bg-elevated border border-border-subtle hover:bg-bg-card transition-colors disabled:opacity-50"
-          >
-            <MessageSquare className="w-5 h-5 text-accent-counselor-light" />
-            <span className="text-xs text-text-secondary">Message</span>
-          </motion.button>
-
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => handleContact("IN_PERSON")}
-            disabled={loading === "contact"}
-            className="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-bg-elevated border border-border-subtle hover:bg-bg-card transition-colors disabled:opacity-50"
-          >
-            <UserCheck className="w-5 h-5 text-accent-counselor-light" />
-            <span className="text-xs text-text-secondary">In Person</span>
-          </motion.button>
-        </div>
-      </div>
-
-      {/* Message Modal */}
+      {/* Resolve Modal */}
       <AnimatePresence>
-        {showMessageModal && (
+        {showResolveModal && (
           <>
             <motion.div
               className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setShowMessageModal(false)}
+              onClick={() => setShowResolveModal(false)}
             />
             <motion.div
               className="fixed inset-0 flex items-center justify-center z-50 p-4"
@@ -183,31 +172,131 @@ export function ActionButtons({
               exit={{ opacity: 0, scale: 0.95 }}
             >
               <div className="w-full max-w-md p-6 rounded-2xl bg-bg-card border border-border-subtle shadow-glow-counselor">
-                <h3 className="text-lg font-bold font-sora text-text-primary mb-4">
-                  Send Check-in Message
-                </h3>
-                <textarea
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  placeholder="Write a supportive message to the student..."
-                  className="w-full h-40 px-4 py-3 rounded-xl bg-bg-elevated border border-border-subtle text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-counselor transition-colors resize-none"
-                />
-                <div className="flex gap-3 mt-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold font-sora text-text-primary">
+                    Resolve Alert
+                  </h3>
                   <button
-                    onClick={() => setShowMessageModal(false)}
+                    onClick={() => setShowResolveModal(false)}
+                    className="p-2 rounded-lg text-text-muted hover:text-text-primary transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <p className="text-sm text-text-secondary mb-4">
+                  Please add a brief note explaining how this alert was resolved.
+                  This helps track intervention effectiveness.
+                </p>
+
+                <textarea
+                  value={resolveNote}
+                  onChange={(e) => setResolveNote(e.target.value)}
+                  placeholder="e.g., Contacted student via email, scheduled follow-up appointment..."
+                  className="w-full h-32 px-4 py-3 rounded-xl bg-bg-elevated border border-border-subtle text-text-primary placeholder:text-text-muted focus:outline-none focus:border-accent-counselor transition-colors resize-none"
+                  maxLength={500}
+                />
+
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-text-muted">
+                    {resolveNote.length}/500 characters
+                  </span>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => setShowResolveModal(false)}
                     className="flex-1 px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-subtle text-text-secondary hover:text-text-primary transition-colors"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={handleSendMessage}
-                    disabled={!messageText.trim() || loading === "send-message"}
+                    onClick={handleResolve}
+                    disabled={!resolveNote.trim() || resolving}
                     className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-counselor text-white font-semibold shadow-glow-counselor hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading === "send-message" ? (
+                    {resolving ? (
                       <Loader2 className="w-5 h-5 animate-spin mx-auto" />
                     ) : (
-                      "Send Message"
+                      "Resolve Alert"
+                    )}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Escalate Modal */}
+      <AnimatePresence>
+        {showEscalateModal && (
+          <>
+            <motion.div
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowEscalateModal(false)}
+            />
+            <motion.div
+              className="fixed inset-0 flex items-center justify-center z-50 p-4"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+            >
+              <div className="w-full max-w-md p-6 rounded-2xl bg-bg-card border border-border-subtle shadow-glow-counselor">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold font-sora text-text-primary flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-warning" />
+                    Escalate Alert
+                  </h3>
+                  <button
+                    onClick={() => setShowEscalateModal(false)}
+                    className="p-2 rounded-lg text-text-muted hover:text-text-primary transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="p-4 rounded-xl bg-warning/10 border border-warning/30 mb-4">
+                  <p className="text-sm text-text-secondary">
+                    This will notify senior counselors and mark this alert as
+                    requiring higher-level intervention. Use this when the case
+                    is beyond your scope.
+                  </p>
+                </div>
+
+                <textarea
+                  value={escalateReason}
+                  onChange={(e) => setEscalateReason(e.target.value)}
+                  placeholder="Please explain why this alert needs to be escalated..."
+                  className="w-full h-32 px-4 py-3 rounded-xl bg-bg-elevated border border-border-subtle text-text-primary placeholder:text-text-muted focus:outline-none focus:border-warning transition-colors resize-none"
+                  maxLength={500}
+                />
+
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-xs text-text-muted">
+                    {escalateReason.length}/500 characters
+                  </span>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    onClick={() => setShowEscalateModal(false)}
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-bg-elevated border border-border-subtle text-text-secondary hover:text-text-primary transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleEscalate}
+                    disabled={!escalateReason.trim() || escalating}
+                    className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-alert-orange text-white font-semibold shadow-glow-orange hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {escalating ? (
+                      <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                    ) : (
+                      "Escalate Alert"
                     )}
                   </button>
                 </div>

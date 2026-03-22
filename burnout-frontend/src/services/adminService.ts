@@ -124,6 +124,51 @@ export const adminService = {
       checkinRates,
     };
   },
+
+  /**
+   * Fetch all users for management
+   * @returns Array of UserManagement records
+   */
+  async getAllUsers(): Promise<import("@/types/admin").UserManagement[]> {
+    const response = await api.get<import("@/types/admin").UserManagement[]>("/api/admin/users");
+    return response.data;
+  },
+
+  /**
+   * Update a user's role
+   * @param userId - Target user ID
+   * @param role - New role to assign
+   * @returns Updated UserManagement record
+   */
+  async updateUserRole(
+    userId: string,
+    role: "STUDENT" | "ADMIN" | "COUNSELOR"
+  ): Promise<import("@/types/admin").UserManagement> {
+    const response = await api.put<import("@/types/admin").UserManagement>(
+      `/api/admin/users/${userId}/role`,
+      { role }
+    );
+    return response.data;
+  },
+
+  /**
+   * Create a new staff member (Admin/Counselor)
+   * @param data - New staff member information
+   * @returns Created UserManagement record
+   */
+  async createStaffUser(data: {
+    name: string;
+    email: string;
+    password: string;
+    role: "ADMIN" | "COUNSELOR";
+    department?: string;
+  }): Promise<import("@/types/admin").UserManagement> {
+    const response = await api.post<import("@/types/admin").UserManagement>(
+      "/api/admin/users/staff",
+      data
+    );
+    return response.data;
+  },
 };
 
 export default adminService;

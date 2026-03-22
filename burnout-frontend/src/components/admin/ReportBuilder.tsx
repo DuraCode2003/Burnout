@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Calendar, Filter, ChevronRight } from "lucide-react";
+import { Calendar, Filter, ChevronRight, Clock } from "lucide-react";
 
 export type Granularity = "daily" | "weekly" | "monthly";
 
