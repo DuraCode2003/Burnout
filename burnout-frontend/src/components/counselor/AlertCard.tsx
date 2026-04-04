@@ -17,6 +17,9 @@ import type { Alert } from "@/types/counselor";
 interface AlertCardProps {
   alert: Alert;
   index?: number;
+  selectable?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 }
 
 const cardVariants = {
@@ -42,7 +45,7 @@ const combinedVariants = {
   ...cardVariants,
 };
 
-export function AlertCard({ alert, index = 0 }: AlertCardProps) {
+export function AlertCard({ alert, index = 0, selectable = false, selected = false, onToggleSelect }: AlertCardProps) {
   const router = useRouter();
 
   const isRed = alert.tier === "RED";
@@ -152,6 +155,19 @@ export function AlertCard({ alert, index = 0 }: AlertCardProps) {
       {/* Header Row */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
+          {selectable && (
+            <div 
+              className="mr-1 mt-0.5"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (onToggleSelect) onToggleSelect(alert.id);
+              }}
+            >
+              <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${selected ? 'bg-accent-counselor border-accent-counselor' : 'border-border-strong hover:border-accent-counselor'}`}>
+                {selected && <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+              </div>
+            </div>
+          )}
           <span
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${badge.bgColor} ${badge.textColor}`}
           >

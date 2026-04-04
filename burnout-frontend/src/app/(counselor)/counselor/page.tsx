@@ -8,6 +8,7 @@ import { CounselorStatsBar } from "@/components/counselor/CounselorStatsBar";
 import { AlertFilterTabs } from "@/components/counselor/AlertFilterTabs";
 import { AlertQueue } from "@/components/counselor/AlertQueue";
 import { CounselorResources } from "@/components/counselor/CounselorResources";
+import { StudentRiskChart } from "@/components/counselor/StudentRiskChart";
 import { RefreshCw, Filter } from "lucide-react";
 import type { Alert, CounselorStats, AlertType } from "@/types/counselor";
 
@@ -69,6 +70,12 @@ export default function CounselorDashboardPage() {
     yellow: alerts.filter((a) => a.tier === "YELLOW").length,
   };
 
+  const riskData = React.useMemo(() => [
+    { level: 'High', count: filterCounts.red, color: '#ef4444' },
+    { level: 'Medium', count: filterCounts.orange, color: '#f97316' },
+    { level: 'Low', count: filterCounts.yellow, color: '#eab308' },
+  ], [filterCounts]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -115,8 +122,15 @@ export default function CounselorDashboardPage() {
         )}
       </AnimatePresence>
 
-      {/* Stats Bar */}
-      <CounselorStatsBar stats={stats} loading={loading} />
+      {/* Stats Bar & Chart Layout */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <CounselorStatsBar stats={stats} loading={loading} />
+        </div>
+        <div className="lg:col-span-1">
+          <StudentRiskChart data={riskData} isLoading={loading} />
+        </div>
+      </div>
 
       {/* Filter Tabs */}
       <AlertFilterTabs
@@ -130,6 +144,7 @@ export default function CounselorDashboardPage() {
         alerts={alerts}
         filter={activeFilter}
         isLoading={loading}
+        onAlertsResolved={() => fetchData(false)}
       />
 
       {/* Helpful Resources & FAQs */}

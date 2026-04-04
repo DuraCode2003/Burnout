@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 
 interface DailyTipCardProps {
   tip: string;
-  category: 'breathing' | 'sleep' | 'exercise' | 'mindfulness' | 'break' | 'social';
+  category: string;
 }
 
 const categoryConfig = {
@@ -58,8 +58,34 @@ const categoryConfig = {
   },
 };
 
+type DailyTipCategory = keyof typeof categoryConfig;
+
+const categoryAliases: Record<string, DailyTipCategory> = {
+  breathing: 'breathing',
+  breathwork: 'breathing',
+  sleep: 'sleep',
+  rest: 'sleep',
+  exercise: 'exercise',
+  physical: 'exercise',
+  fitness: 'exercise',
+  mindfulness: 'mindfulness',
+  meditation: 'mindfulness',
+  focus: 'mindfulness',
+  'stress management': 'mindfulness',
+  break: 'break',
+  breaks: 'break',
+  general: 'mindfulness',
+  social: 'social',
+  connection: 'social',
+};
+
+function normalizeCategory(category: string): DailyTipCategory {
+  const normalized = category.trim().toLowerCase();
+  return categoryAliases[normalized] ?? 'mindfulness';
+}
+
 export function DailyTipCard({ tip, category }: DailyTipCardProps) {
-  const config = categoryConfig[category];
+  const config = categoryConfig[normalizeCategory(category)];
 
   return (
     <motion.div
