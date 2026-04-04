@@ -9,6 +9,7 @@ import { MoodChart } from '@/components/dashboard/MoodChart';
 import { DailyTipCard } from '@/components/dashboard/DailyTipCard';
 import { StatusCard } from '@/components/dashboard/StatusCard';
 import { HelpSupportCard } from '@/components/dashboard/HelpSupportCard';
+import { ChatWidget } from '@/components/ai/ChatWidget';
 import { api } from '@/services/api';
 import { getTimeBasedGreeting, formatDate } from '@/utils/helpers';
 import type { RiskLevel } from '@/types';
@@ -34,7 +35,7 @@ interface DashboardData {
 
 interface Tip {
   text: string;
-  category: 'breathing' | 'sleep' | 'exercise' | 'mindfulness' | 'break' | 'social';
+  category: string;
 }
 
 
@@ -105,7 +106,7 @@ export default function DashboardPage() {
         if (tipData) {
           setTip({
             text: tipData.content,
-            category: tipData.category.toLowerCase() as any
+            category: tipData.category || 'mindfulness'
           });
         }
       } catch (err) {
@@ -226,6 +227,9 @@ export default function DashboardPage() {
                 </motion.div>
               ) : null}
             </AnimatePresence>
+
+      {/* AI Chat Widget */}
+      <ChatWidget />
     </div>
   );
 }

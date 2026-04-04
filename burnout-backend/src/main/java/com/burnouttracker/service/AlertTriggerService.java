@@ -12,12 +12,15 @@ import com.burnouttracker.repository.ConsentRepository;
 import com.burnouttracker.repository.MoodEntryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -31,6 +34,7 @@ public class AlertTriggerService {
     private final MoodEntryRepository moodEntryRepository;
     private final ConsentRepository consentRepository;
     private final AlertRuleEvaluator ruleEvaluator;
+    private final RabbitTemplate rabbitTemplate;
 
     @Transactional
     public void evaluateAndTriggerAlert(UUID userId) {
@@ -91,5 +95,37 @@ public class AlertTriggerService {
             .build();
         alertRepository.save(alert);
         log.info("Created {} alert for user {}: {}", type, userId, reason);
+        
+        // Publish alert event to RabbitMQ for AI proactive agent
+        publishAlertEvent(alert);
+    }
+    
+    /**
+     * Publish alert event to RabbitMQ for AI proactive message generation.
+     * Message is consumed by burnout-ai-service to generate personalized wellness message.
+     */
+    private void publishAlertEvent(Alert alert) {
+        try {
+            Map<String, Object> event = new HashMap<>();
+            event.put("alertId", alert.getId().toString());
+            event.put("alertType", alert.getAlertType().toString());
+            event.put("userId", alert.getUserId().toString());
+            event.put("burnoutScore", alert.getBurnoutScore().doubleValue());
+            event.put("triggerReason", alert.getTriggerReason());
+            event.put("riskLevel", alert.getRiskLevel());
+            event.put("createdAt", alert.getCreatedAt().toString());
+            
+            rabbitTemplate.convertAndSend(
+                "burnout.alerts.exchange",
+                "burnout.alerts.new",
+                event
+            );
+            
+            log.debug("Published alert event to RabbitMQ: {}", alert.getId());
+            
+        } catch (Exception e) {
+            // Log but don't fail - alert was already saved
+            log.error("Failed to publish alert event to RabbitMQ: {}", e.getMessage(), e);
+        }
     }
 }

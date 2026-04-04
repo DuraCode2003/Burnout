@@ -89,6 +89,25 @@ public class AlertService {
     }
 
     @Transactional
+    public List<AlertResponseDTO> bulkResolveAlerts(List<UUID> alertIds, String note, UUID counselorId) {
+        List<Alert> alerts = alertRepository.findAllById(alertIds).stream()
+                .filter(alert -> !alert.getStatus().isTerminal())
+                .collect(Collectors.toList());
+
+        LocalDateTime now = LocalDateTime.now();
+        alerts.forEach(alert -> {
+            alert.setStatus(AlertStatus.RESOLVED);
+            alert.setResolvedAt(now);
+            alert.setCounselorId(counselorId);
+            alert.setCounselorNote(statsHelper.appendNote(alert.getCounselorNote(), note));
+            log.info("Alert {} bulk-resolved by counselor {}", alert.getId(), counselorId);
+        });
+
+        List<Alert> savedAlerts = alertRepository.saveAll(alerts);
+        return savedAlerts.stream().map(statsHelper::mapToDTO).collect(Collectors.toList());
+    }
+
+    @Transactional
     public AlertResponseDTO escalateAlert(UUID alertId, String reason, UUID counselorId) {
         Alert alert = alertRepository.findById(alertId)
                 .orElseThrow(() -> new ResourceNotFoundException("Alert not found: " + alertId));

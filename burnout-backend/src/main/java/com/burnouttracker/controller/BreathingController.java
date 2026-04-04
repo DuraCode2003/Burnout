@@ -1,3 +1,5 @@
+package com.burnouttracker.controller;
+
 import com.burnouttracker.model.BreathingSession;
 import com.burnouttracker.model.User;
 import com.burnouttracker.repository.BreathingSessionRepository;

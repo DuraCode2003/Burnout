@@ -10,6 +10,7 @@ interface AlertQueueProps {
   alerts: Alert[];
   filter: AlertType | "ALL";
   isLoading: boolean;
+  onAlertsResolved?: () => void;
 }
 
 const containerVariants = {
@@ -42,7 +43,49 @@ const emptyStateVariants = {
   },
 };
 
-export function AlertQueue({ alerts, filter, isLoading }: AlertQueueProps) {
+import { counselorService } from "@/services/counselorService";
+import toast from "react-hot-toast";
+
+export function AlertQueue({ alerts, filter, isLoading, onAlertsResolved }: AlertQueueProps) {
+  const [selectedAlerts, setSelectedAlerts] = React.useState<Set<string>>(new Set());
+  const [isResolving, setIsResolving] = React.useState(false);
+
+  // Clear selection when filter changes
+  React.useEffect(() => {
+    setSelectedAlerts(new Set());
+  }, [filter]);
+
+  const handleToggleSelect = React.useCallback((id: string) => {
+    setSelectedAlerts(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const handleSelectAll = React.useCallback(() => {
+    if (selectedAlerts.size === alerts.length) {
+      setSelectedAlerts(new Set());
+    } else {
+      setSelectedAlerts(new Set(alerts.map(a => a.id)));
+    }
+  }, [alerts, selectedAlerts.size]);
+
+  const handleBulkResolve = async () => {
+    if (selectedAlerts.size === 0) return;
+    setIsResolving(true);
+    try {
+      await counselorService.bulkResolveAlerts(Array.from(selectedAlerts), "Bulk resolved from dashboard");
+      toast.success(`Successfully resolved ${selectedAlerts.size} alerts`);
+      setSelectedAlerts(new Set());
+      if (onAlertsResolved) onAlertsResolved();
+    } catch (error) {
+      toast.error("Failed to bulk resolve alerts");
+    } finally {
+      setIsResolving(false);
+    }
+  };
   // Filter alerts
   const filteredAlerts = React.useMemo(() => {
     if (filter === "ALL") return alerts;
@@ -143,21 +186,63 @@ export function AlertQueue({ alerts, filter, isLoading }: AlertQueueProps) {
     );
   }
 
-  // Alert list
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      className="space-y-4"
-    >
+    <div className="space-y-4">
+      {selectedAlerts.size > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between p-3 px-4 bg-bg-card border border-accent-counselor/30 rounded-xl shadow-glow-counselor"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-text-primary">
+              {selectedAlerts.size} alert{selectedAlerts.size > 1 ? 's' : ''} selected
+            </span>
+            <button
+              onClick={handleSelectAll}
+              className="text-xs text-text-muted hover:text-text-primary transition-colors"
+            >
+              Select All
+            </button>
+            <button
+              onClick={() => setSelectedAlerts(new Set())}
+              className="text-xs text-text-muted hover:text-text-primary transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+          <button
+            onClick={handleBulkResolve}
+            disabled={isResolving}
+            className="flex items-center gap-2 px-4 py-1.5 bg-gradient-counselor text-white text-sm font-semibold rounded-lg hover:shadow-lg disabled:opacity-50 transition-all"
+          >
+            {isResolving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Inbox className="w-4 h-4" />}
+            Resolve Selected
+          </button>
+        </motion.div>
+      )}
+
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        className="space-y-4"
+      >
       <AnimatePresence mode="popLayout">
         {sortedAlerts.map((alert, index) => (
-          <AlertCard key={alert.id} alert={alert} index={index} />
+          <AlertCard 
+            key={alert.id} 
+            alert={alert} 
+            index={index}
+            selectable={true}
+            selected={selectedAlerts.has(alert.id)}
+            onToggleSelect={handleToggleSelect}
+          />
         ))}
       </AnimatePresence>
     </motion.div>
+  </div>
   );
 }
 

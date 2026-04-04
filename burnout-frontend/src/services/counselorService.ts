@@ -56,6 +56,20 @@ export const counselorService = {
   },
 
   /**
+   * Bulk resolve multiple alerts
+   * @param alertIds - Array of alert IDs
+   * @param resolutionNotes - Notes for resolution
+   * @returns Array of updated alerts
+   */
+  async bulkResolveAlerts(alertIds: string[], resolutionNotes: string): Promise<Alert[]> {
+    const response = await api.put<Alert[]>(
+      '/api/counselor/alerts/bulk-resolve',
+      { alertIds, resolutionNotes }
+    );
+    return response.data;
+  },
+
+  /**
    * Escalate alert to senior counselor
    * @param alertId - Alert ID
    * @param request - Escalation reason and priority

@@ -3,6 +3,7 @@ package com.burnouttracker.controller;
 import com.burnouttracker.dto.request.ContactStudentRequest;
 import com.burnouttracker.dto.request.EscalateAlertRequest;
 import com.burnouttracker.dto.request.AddNoteRequest;
+import com.burnouttracker.dto.request.BulkResolveRequest;
 import com.burnouttracker.dto.request.ResolveAlertRequest;
 import com.burnouttracker.dto.response.counselor.AlertResponseDTO;
 import com.burnouttracker.dto.response.counselor.CounselorStatsDTO;
@@ -42,6 +43,11 @@ public class CounselorController {
     @PutMapping("/alerts/{id}/resolve")
     public ResponseEntity<AlertResponseDTO> resolveAlert(@PathVariable UUID id, @RequestBody @Valid ResolveAlertRequest request) {
         return ResponseEntity.ok(alertService.resolveAlert(id, request.getResolutionNotes(), getCurrentCounselorId()));
+    }
+
+    @PutMapping("/alerts/bulk-resolve")
+    public ResponseEntity<List<AlertResponseDTO>> bulkResolveAlerts(@RequestBody @Valid BulkResolveRequest request) {
+        return ResponseEntity.ok(alertService.bulkResolveAlerts(request.getAlertIds(), request.getResolutionNotes(), getCurrentCounselorId()));
     }
 
     @PutMapping("/alerts/{id}/escalate")
