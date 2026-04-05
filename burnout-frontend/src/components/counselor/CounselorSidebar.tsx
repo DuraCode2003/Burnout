@@ -162,15 +162,6 @@ export function CounselorSidebar({
           </div>
         </div>
 
-        <Link
-          href="/dashboard"
-          onClick={onClose}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-all duration-300 mb-2"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">Back to Student View</span>
-        </Link>
-
         <button
           onClick={handleLogout}
           className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-danger hover:bg-bg-elevated transition-all duration-300"

@@ -1,8 +1,9 @@
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
+import { useCheckinStatus } from '@/hooks/useCheckinStatus';
 
 const NAV_ITEMS = [
   {
@@ -45,7 +46,7 @@ const NAV_ITEMS = [
 
 export function MobileBottomNav() {
   const pathname = usePathname();
-  const router = useRouter();
+  const { hasCheckedInToday } = useCheckinStatus();
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
@@ -53,6 +54,23 @@ export function MobileBottomNav() {
         <div className="flex items-center justify-around py-2 safe-area-pb">
           {NAV_ITEMS.map((item) => {
             const isActive = pathname === item.href;
+            const isCheckinLocked = item.label === 'Check-in' && hasCheckedInToday;
+
+            if (isCheckinLocked) {
+              return (
+                <div
+                  key={item.href}
+                  className="relative flex flex-col items-center justify-center w-full py-2 px-3 opacity-40 grayscale"
+                >
+                  <div className="text-text-muted">
+                    {item.icon}
+                  </div>
+                  <span className="text-xs mt-1 font-medium text-text-muted">
+                    Done
+                  </span>
+                </div>
+              );
+            }
 
             return (
               <Link

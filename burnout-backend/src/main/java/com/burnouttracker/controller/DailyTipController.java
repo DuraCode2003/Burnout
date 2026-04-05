@@ -1,9 +1,11 @@
 package com.burnouttracker.controller;
 
 import com.burnouttracker.model.DailyTip;
+import com.burnouttracker.model.User;
 import com.burnouttracker.service.DailyTipService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,12 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/tips")
 @RequiredArgsConstructor
 public class DailyTipController {
+    
     private final DailyTipService dailyTipService;
 
     @GetMapping("/today")
-    public ResponseEntity<DailyTip> getTodayTip() {
-        return ResponseEntity.ok(
-            dailyTipService.getTodayTip().orElse(dailyTipService.getFallbackTip())
-        );
+    public ResponseEntity<DailyTip> getTodayTip(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(dailyTipService.getTodayTip(user.getId()));
     }
 }

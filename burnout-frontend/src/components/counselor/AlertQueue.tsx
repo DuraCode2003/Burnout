@@ -3,7 +3,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCard } from "./AlertCard";
-import { AlertTriangle, Inbox, Loader2 } from "lucide-react";
+import { AlertTriangle, Inbox, Loader2, CheckCircle2 } from "lucide-react";
 import type { Alert, AlertType } from "@/types/counselor";
 
 interface AlertQueueProps {
@@ -192,32 +192,40 @@ export function AlertQueue({ alerts, filter, isLoading, onAlertsResolved }: Aler
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between p-3 px-4 bg-bg-card border border-accent-counselor/30 rounded-xl shadow-glow-counselor"
+          className="flex items-center justify-between p-4 bg-indigo-500/[0.05] backdrop-blur-xl border border-indigo-500/20 rounded-2xl shadow-glow-indigo"
         >
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-text-primary">
-              {selectedAlerts.size} alert{selectedAlerts.size > 1 ? 's' : ''} selected
-            </span>
-            <button
-              onClick={handleSelectAll}
-              className="text-xs text-text-muted hover:text-text-primary transition-colors"
-            >
-              Select All
-            </button>
-            <button
-              onClick={() => setSelectedAlerts(new Set())}
-              className="text-xs text-text-muted hover:text-text-primary transition-colors"
-            >
-              Clear
-            </button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-500 text-white shadow-lg">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-sm font-black text-white tracking-tight">
+                {selectedAlerts.size} alert{selectedAlerts.size > 1 ? 's' : ''} selected
+              </span>
+              <div className="flex items-center gap-3 mt-0.5">
+                <button
+                  onClick={handleSelectAll}
+                  className="text-[10px] font-black uppercase tracking-widest text-indigo-400 hover:text-indigo-300 transition-colors"
+                >
+                  Select All
+                </button>
+                <div className="w-1 h-1 rounded-full bg-white/10" />
+                <button
+                  onClick={() => setSelectedAlerts(new Set())}
+                  className="text-[10px] font-black uppercase tracking-widest text-white/30 hover:text-white/60 transition-colors"
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
           </div>
           <button
             onClick={handleBulkResolve}
             disabled={isResolving}
-            className="flex items-center gap-2 px-4 py-1.5 bg-gradient-counselor text-white text-sm font-semibold rounded-lg hover:shadow-lg disabled:opacity-50 transition-all"
+            className="flex items-center gap-2 px-6 py-2.5 bg-indigo-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-xl hover:bg-indigo-600 shadow-lg shadow-indigo-500/20 disabled:opacity-50 transition-all"
           >
-            {isResolving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Inbox className="w-4 h-4" />}
-            Resolve Selected
+            {isResolving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Inbox className="w-3.5 h-3.5" />}
+            Bulk Resolve
           </button>
         </motion.div>
       )}

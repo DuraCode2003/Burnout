@@ -41,6 +41,11 @@ jwt:
   secret: ${JWT_SECRET}
   expiration-ms: ${JWT_EXPIRATION_MS:86400000}
 
+ai:
+  service:
+    url: ${AI_SERVICE_URL:http://localhost:8001}
+    api-key: ${INTERNAL_API_KEY:burnout-internal-secure-key-2026}
+
 cors:
   allowed-origin: ${CORS_ALLOWED_ORIGIN:http://localhost:3000}
 

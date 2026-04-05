@@ -113,71 +113,59 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-bg-primary">
+    <div className="min-h-screen flex flex-col bg-bg-primary">
+      <div className="flex flex-1">
       {/* Left Panel - Visual */}
       <motion.div
-        className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-bg-surface"
+        className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
       >
-        {/* Animated Background */}
-        <div className="absolute inset-0">
-          <motion.div
-            className="absolute top-20 left-20 w-72 h-72 rounded-full blur-[100px]"
-            style={{ background: 'radial-gradient(circle, rgba(99,102,241,0.4) 0%, transparent 70%)' }}
-            animate={{ x: [0, 50, 0], y: [0, 30, 0], scale: [1, 1.1, 1] }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
-          />
-
-          <motion.div
-            className="absolute top-40 right-20 w-96 h-96 rounded-full blur-[120px]"
-            style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)' }}
-            animate={{ x: [0, -40, 0], y: [0, 50, 0], scale: [1, 1.2, 1] }}
-            transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
-          />
-
-          <motion.div
-            className="absolute bottom-40 left-40 w-80 h-80 rounded-full blur-[100px]"
-            style={{ background: 'radial-gradient(circle, rgba(168,85,247,0.3) 0%, transparent 70%)' }}
-            animate={{ x: [0, 60, 0], y: [0, -40, 0], scale: [1, 1.15, 1] }}
-            transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
-          />
+        {/* Subtle ambient glow only */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/3 left-1/4 w-64 h-64 rounded-full blur-[120px] bg-indigo-600/10" />
+          <div className="absolute bottom-1/3 right-1/4 w-48 h-48 rounded-full blur-[100px] bg-violet-600/10" />
         </div>
 
         <div className="relative z-10 flex flex-col items-center justify-center w-full p-12">
           <motion.div
-            className="mb-8"
+            className="mb-6"
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.3 }}
           >
-            <div className="relative w-24 h-24 overflow-hidden rounded-2xl shadow-glow-indigo-lg border border-border-subtle">
+            <div className="relative w-14 h-14 overflow-hidden rounded-2xl shadow-glow-indigo border border-border-subtle">
               <Image 
                 src={logo} 
                 alt="Burnout Tracker Logo" 
                 fill 
+                sizes="56px"
                 className="object-cover"
               />
-              {/* Scanning Light Effect */}
-              <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
-                <div className="w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-25deg] animate-scanning-light shadow-[0_0_20px_rgba(255,255,255,0.1)]" />
-              </div>
             </div>
           </motion.div>
 
-          <motion.h1 className="text-3xl lg:text-4xl font-bold font-sora text-text-primary mb-3 whitespace-nowrap" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
+          <motion.h1 className="text-2xl font-bold font-sora text-text-primary mb-2" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }}>
             Burnout Tracker
           </motion.h1>
 
-          <motion.p className="text-lg text-text-secondary" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
+          <motion.p className="text-sm text-text-secondary" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.7 }}>
             Your wellbeing, understood.
           </motion.p>
 
-          <motion.div className="mt-12 p-6 rounded-2xl bg-bg-card/50 border border-border-subtle" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
-            <p className="text-text-secondary text-center">
-              Join thousands of students taking control of their mental wellbeing
+          <motion.div className="mt-10 p-5 rounded-2xl bg-white/[0.03] border border-white/5 w-full" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.8 }}>
+            <p className="text-text-secondary text-sm text-center italic">
+              &quot;Join thousands of students taking control of their mental wellbeing.&quot;
             </p>
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <p className="text-[10px] uppercase tracking-[0.2em] font-black text-text-secondary/50">2,847 students across 12 universities</p>
+              <div className="flex items-center -space-x-2">
+                {['🎓','👩‍🎓','👨‍🎓','🧑‍🎓'].map((emoji, i) => (
+                  <div key={i} className="w-7 h-7 rounded-full bg-indigo-500/20 border border-white/10 flex items-center justify-center text-sm">{emoji}</div>
+                ))}
+              </div>
+            </div>
           </motion.div>
         </div>
       </motion.div>
@@ -372,9 +360,9 @@ export default function RegisterPage() {
                 />
                 <span className="text-sm text-text-secondary">
                   I agree to the{' '}
-                  <Link href="/terms" className="text-accent-indigo hover:underline">Terms of Service</Link>
+                  <Link href="/terms" target="_blank" rel="noopener noreferrer" className="text-accent-indigo hover:underline">Terms of Service</Link>
                   {' '}and{' '}
-                  <Link href="/privacy" className="text-accent-indigo hover:underline">Privacy Policy</Link>
+                  <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="text-accent-indigo hover:underline">Privacy Policy</Link>
                 </span>
               </label>
             </motion.div>
@@ -423,6 +411,14 @@ export default function RegisterPage() {
           </motion.p>
         </motion.div>
       </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="py-4 text-center">
+        <p className="text-[10px] uppercase tracking-widest font-medium text-text-secondary/30">
+          © 2025 Burnout Tracker · <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="hover:text-text-secondary transition-colors">Privacy Policy</Link> · <Link href="/terms" target="_blank" rel="noopener noreferrer" className="hover:text-text-secondary transition-colors">Terms</Link>
+        </p>
+      </footer>
     </div>
   );
 }

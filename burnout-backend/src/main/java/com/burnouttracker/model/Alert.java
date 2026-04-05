@@ -21,6 +21,7 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Alert {
 
     @Id
@@ -106,6 +107,13 @@ public class Alert {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    /**
+     * Whether the student has explicitly requested human support
+     */
+    @Column(name = "support_requested")
+    @Builder.Default
+    private Boolean supportRequested = false;
 
     /**
      * Check if this alert is urgent (RED type)

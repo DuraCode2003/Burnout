@@ -1,13 +1,8 @@
 package com.burnouttracker.controller;
 
-import com.burnouttracker.dto.request.ContactStudentRequest;
-import com.burnouttracker.dto.request.EscalateAlertRequest;
-import com.burnouttracker.dto.request.AddNoteRequest;
-import com.burnouttracker.dto.request.BulkResolveRequest;
-import com.burnouttracker.dto.request.ResolveAlertRequest;
-import com.burnouttracker.dto.response.counselor.AlertResponseDTO;
-import com.burnouttracker.dto.response.counselor.CounselorStatsDTO;
-import com.burnouttracker.dto.response.counselor.ResolutionStatsDTO;
+import com.burnouttracker.dto.request.*;
+import com.burnouttracker.dto.response.counselor.*;
+import com.burnouttracker.service.AiCounselorService;
 import com.burnouttracker.service.AlertService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +24,7 @@ import java.util.UUID;
 public class CounselorController {
 
     private final AlertService alertService;
+    private final AiCounselorService aiCounselorService;
 
     @GetMapping("/alerts")
     public ResponseEntity<List<AlertResponseDTO>> getActiveAlerts() {
@@ -38,6 +34,21 @@ public class CounselorController {
     @GetMapping("/alerts/{id}")
     public ResponseEntity<AlertResponseDTO> getAlertById(@PathVariable UUID id) {
         return ResponseEntity.ok(alertService.getAlertById(id));
+    }
+
+    @GetMapping("/alerts/{id}/ai-summary")
+    public ResponseEntity<CounselorAiSummaryResponse> getAiSummary(@PathVariable UUID id) {
+        return ResponseEntity.ok(aiCounselorService.getSummaryForAlert(id));
+    }
+
+    @GetMapping("/alerts/{id}/draft-resolution")
+    public ResponseEntity<CounselorAiSummaryResponse> getResolutionDraft(@PathVariable UUID id) {
+        return ResponseEntity.ok(aiCounselorService.getResolutionDraft(id));
+    }
+
+    @GetMapping("/alerts/{id}/draft-escalation")
+    public ResponseEntity<CounselorAiSummaryResponse> getEscalationReport(@PathVariable UUID id, @RequestParam String reason) {
+        return ResponseEntity.ok(aiCounselorService.getEscalationReport(id, reason));
     }
 
     @PutMapping("/alerts/{id}/resolve")

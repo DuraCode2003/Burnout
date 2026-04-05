@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePathname } from "next/navigation";
 import counselorService from "@/services/counselorService";
 import { UrgentAlertBanner } from "@/components/counselor/UrgentAlertBanner";
 import { CounselorStatsBar } from "@/components/counselor/CounselorStatsBar";
@@ -18,6 +19,7 @@ export default function CounselorDashboardPage() {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [stats, setStats] = useState<CounselorStats | null>(null);
   const [activeFilter, setActiveFilter] = useState<AlertType | "ALL">("ALL");
+  const pathname = usePathname();
 
   // Fetch data
   const fetchData = useCallback(async (isRefresh = false) => {
@@ -41,7 +43,7 @@ export default function CounselorDashboardPage() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [pathname]);
 
   // Initial fetch
   useEffect(() => {
@@ -77,7 +79,13 @@ export default function CounselorDashboardPage() {
   ], [filterCounts]);
 
   return (
-    <div className="space-y-6">
+    <motion.div 
+      key={pathname}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="space-y-6"
+    >
       {/* Header */}
       <motion.div
         className="flex items-center justify-between"
@@ -168,6 +176,6 @@ export default function CounselorDashboardPage() {
           </p>
         </motion.div>
       )}
-    </div>
+    </motion.div>
   );
 }

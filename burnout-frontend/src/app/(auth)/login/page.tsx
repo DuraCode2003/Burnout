@@ -50,97 +50,44 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-bg-primary">
+    <div className="min-h-screen flex flex-col bg-bg-primary">
+      <div className="flex flex-1">
       {/* Left Panel - Visual */}
       <motion.div
-        className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-bg-surface"
+        className="hidden lg:flex lg:w-1/2 relative overflow-hidden"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.8 }}
       >
-        {/* Animated Background */}
-        <div className="absolute inset-0">
-          {/* Gradient Orbs */}
-          <motion.div
-            className="absolute top-20 left-20 w-72 h-72 rounded-full blur-[100px]"
-            style={{
-              background: 'radial-gradient(circle, rgba(99,102,241,0.4) 0%, transparent 70%)',
-            }}
-            animate={{
-              x: [0, 50, 0],
-              y: [0, 30, 0],
-              scale: [1, 1.1, 1],
-            }}
-            transition={{
-              duration: 8,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-          />
-
-          <motion.div
-            className="absolute top-40 right-20 w-96 h-96 rounded-full blur-[120px]"
-            style={{
-              background: 'radial-gradient(circle, rgba(139,92,246,0.3) 0%, transparent 70%)',
-            }}
-            animate={{
-              x: [0, -40, 0],
-              y: [0, 50, 0],
-              scale: [1, 1.2, 1],
-            }}
-            transition={{
-              duration: 10,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: 1,
-            }}
-          />
-
-          <motion.div
-            className="absolute bottom-40 left-40 w-80 h-80 rounded-full blur-[100px]"
-            style={{
-              background: 'radial-gradient(circle, rgba(168,85,247,0.3) 0%, transparent 70%)',
-            }}
-            animate={{
-              x: [0, 60, 0],
-              y: [0, -40, 0],
-              scale: [1, 1.15, 1],
-            }}
-            transition={{
-              duration: 12,
-              repeat: Infinity,
-              ease: 'easeInOut',
-              delay: 2,
-            }}
-          />
+        {/* Subtle ambient glow only */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/3 left-1/4 w-64 h-64 rounded-full blur-[120px] bg-indigo-600/10" />
+          <div className="absolute bottom-1/3 right-1/4 w-48 h-48 rounded-full blur-[100px] bg-violet-600/10" />
         </div>
 
         {/* Content */}
         <div className="relative z-10 flex flex-col items-center justify-center w-full p-12">
-          {/* Logo */}
+          {/* Logo - smaller to match reference */}
           <motion.div
-            className="mb-8"
+            className="mb-6"
             initial={{ scale: 0, rotate: -180 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.3 }}
           >
-            <div className="relative w-24 h-24 overflow-hidden rounded-2xl shadow-glow-indigo-lg border border-border-subtle group">
+            <div className="relative w-14 h-14 overflow-hidden rounded-2xl shadow-glow-indigo border border-border-subtle">
               <Image 
                 src={logo} 
                 alt="Burnout Tracker Logo" 
                 fill 
+                sizes="56px"
                 className="object-cover"
               />
-              {/* Scanning Light Effect */}
-              <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
-                <div className="w-1/2 h-full bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-[-25deg] animate-scanning-light shadow-[0_0_20px_rgba(255,255,255,0.1)]" />
-              </div>
             </div>
           </motion.div>
 
           {/* Title */}
           <motion.h1
-            className="text-3xl lg:text-4xl font-bold font-sora text-text-primary mb-3 whitespace-nowrap"
+            className="text-2xl font-bold font-sora text-text-primary mb-2"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
@@ -149,7 +96,7 @@ export default function LoginPage() {
           </motion.h1>
 
           <motion.p
-            className="text-lg text-text-secondary"
+            className="text-sm text-text-secondary"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
@@ -211,6 +158,7 @@ export default function LoginPage() {
                 src={logo} 
                 alt="Burnout Tracker Logo" 
                 fill 
+                sizes="64px"
                 className="object-cover"
               />
               {/* Scanning Light Effect */}
@@ -265,9 +213,10 @@ export default function LoginPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <label className="block text-sm font-medium text-text-secondary mb-2">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-sm font-medium text-text-secondary">Password</label>
+                <Link href="/forgot-password" className="text-xs text-accent-indigo hover:text-accent-violet transition-colors">Forgot?</Link>
+              </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                   <svg className="w-5 h-5 text-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -353,6 +302,14 @@ export default function LoginPage() {
           </motion.p>
         </motion.div>
       </div>
+      </div>
+
+      {/* Footer */}
+      <footer className="py-4 text-center">
+        <p className="text-[10px] uppercase tracking-widest font-medium text-text-secondary/30">
+          © 2025 Burnout Tracker · Privacy Policy · Terms
+        </p>
+      </footer>
     </div>
   );
 }

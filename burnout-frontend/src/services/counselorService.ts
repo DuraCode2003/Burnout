@@ -233,6 +233,44 @@ export const counselorService = {
       `/api/counselor/alerts/${alertId}/acknowledge`
     );
     return response.data;
+  },
+
+  /**
+   * Fetch AI-generated summary for an alert from Luma
+   * @param alertId - Alert ID
+   * @returns AI summary response
+   */
+  async getAiSummary(alertId: string): Promise<{ success: boolean; summary: string }> {
+    const response = await api.get<{ success: boolean; summary: string }>(
+      `/api/counselor/alerts/${alertId}/ai-summary`
+    );
+    return response.data;
+  },
+
+  /**
+   * Fetch AI-generated resolution draft from Luma
+   * @param alertId - Alert ID
+   * @returns Resolution draft summary
+   */
+  async getResolutionDraft(alertId: string): Promise<{ success: boolean; summary: string }> {
+    const response = await api.get<{ success: boolean; summary: string }>(
+      `/api/counselor/alerts/${alertId}/draft-resolution`
+    );
+    return response.data;
+  },
+
+  /**
+   * Fetch AI-generated escalation report from Luma
+   * @param alertId - Alert ID
+   * @param reason - Counselor's primary reason for escalation
+   * @returns Formal escalation report draft
+   */
+  async getEscalationReport(alertId: string, reason: string): Promise<{ success: boolean; summary: string }> {
+    const response = await api.get<{ success: boolean; summary: string }>(
+      `/api/counselor/alerts/${alertId}/draft-escalation`,
+      { params: { reason } }
+    );
+    return response.data;
   }
 };
 
