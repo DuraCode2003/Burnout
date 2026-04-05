@@ -3,14 +3,23 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowLeft, Loader2, AlertTriangle } from "lucide-react";
+import { 
+  ArrowLeft, 
+  Loader2, 
+  AlertTriangle, 
+  Lock, 
+  ShieldCheck 
+} from "lucide-react";
 import counselorService from "@/services/counselorService";
 import { AlertDetailPanel } from "@/components/counselor/AlertDetailPanel";
 import { ActionButtons } from "@/components/counselor/ActionButtons";
+import { CounselorChatPane } from "@/components/counselor/CounselorChatPane";
 import { NoteEditor } from "@/components/counselor/NoteEditor";
 import { CrisisResourcePanel } from "@/components/counselor/CrisisResourcePanel";
 import { NoteHistory } from "@/components/counselor/NoteHistory";
 import { RiskBadge } from "@/components/counselor/RiskBadge";
+import { supportService } from "@/services/supportService";
+import { SupportSession } from "@/types/support";
 import type { Alert } from "@/types/counselor";
 import toast from "react-hot-toast";
 
@@ -21,6 +30,7 @@ export default function AlertDetailPage() {
 
   const [loading, setLoading] = useState(true);
   const [alert, setAlert] = useState<Alert | null>(null);
+  const [activeSession, setActiveSession] = useState<SupportSession | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch alert detail
@@ -29,6 +39,11 @@ export default function AlertDetailPage() {
       setLoading(true);
       const data = await counselorService.getAlertById(alertId);
       setAlert(data);
+      
+      // Also fetch active support session
+      const session = await supportService.getActiveSession(alertId);
+      setActiveSession(session);
+      
       setError(null);
     } catch (err) {
       console.error("Failed to fetch alert:", err);
@@ -52,32 +67,6 @@ export default function AlertDetailPage() {
   }, [fetchAlert]);
 
   // Action handlers
-  const handleContact = async () => {
-    const updated = await counselorService.logContact(alertId, {
-      contactMethod: "PHONE",
-    });
-    setAlert(updated);
-  };
-
-  const handleResolve = async (note: string) => {
-    const updated = await counselorService.resolveAlert(alertId, {
-      resolutionNotes: note,
-    });
-    setAlert(updated);
-    // Redirect after short delay
-    setTimeout(() => {
-      router.push("/counselor");
-    }, 1000);
-  };
-
-  const handleEscalate = async (reason: string) => {
-    const updated = await counselorService.escalateAlert(alertId, {
-      reason,
-      priority: alert?.tier === "RED" ? "URGENT" : "HIGH",
-    });
-    setAlert(updated);
-  };
-
   const handleAddNote = async (note: string) => {
     const updated = await counselorService.addNote(alertId, {
       note,
@@ -152,6 +141,19 @@ export default function AlertDetailPage() {
             <span className="text-sm text-text-muted">
               ID: {alert.id.slice(0, 8)}
             </span>
+            {activeSession && (
+              activeSession.isAnonymous ? (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-rose-500/10 border border-rose-500/20">
+                  <Lock className="w-2.5 h-2.5 text-rose-400" />
+                  <span className="text-[9px] font-black text-rose-400 uppercase tracking-widest">ANONYMOUS</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
+                  <span className="text-[9px] font-black text-emerald-400 uppercase tracking-widest">IDENTIFIED</span>
+                </div>
+              )
+            )}
             {alert.isUrgent && (
               <span className="text-xs text-danger font-medium">
                 • Requires response within 2 hours
@@ -187,21 +189,34 @@ export default function AlertDetailPage() {
 
         {/* Right Column: Actions Panel */}
         <div className="lg:col-span-1 space-y-6">
+          {/* Support Chat Pane */}
+          {activeSession && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="h-[500px]"
+            >
+              <CounselorChatPane 
+                session={activeSession} 
+                onSessionUpdated={(updated) => setActiveSession(updated)}
+              />
+            </motion.div>
+          )}
+
           {/* Action Buttons */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.2 }}
-            className="p-6 rounded-2xl bg-bg-card border border-border-subtle sticky top-24"
+            className="p-6 rounded-2xl bg-bg-card border border-border-subtle"
           >
             <h3 className="text-lg font-bold font-sora text-text-primary mb-4">
               Take Action
             </h3>
             <ActionButtons
               alert={alert}
-              onContact={handleContact}
-              onResolve={handleResolve}
-              onEscalate={handleEscalate}
+              onSuccess={fetchAlert}
+              onSessionStarted={(session) => setActiveSession(session)}
             />
 
             {/* Divider */}

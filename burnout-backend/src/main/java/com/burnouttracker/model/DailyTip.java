@@ -24,6 +24,9 @@ public class DailyTip {
     @Column(nullable = false)
     private String category;
 
+    @Column(name = "user_id")
+    private UUID userId;
+
     @Column(name = "display_date")
     private java.time.LocalDate displayDate;
 }

@@ -95,6 +95,7 @@ export interface Alert {
   actions: AlertAction[];
   isUrgent: boolean;
   responseTimeRemaining?: number;
+  supportRequested: boolean;
 }
 
 // ============================================================================

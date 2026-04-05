@@ -28,6 +28,8 @@ public interface AlertRepository extends JpaRepository<Alert, UUID>, JpaSpecific
      */
     List<Alert> findByStatusOrderByCreatedAtDesc(AlertStatus status);
 
+    Optional<Alert> findTopByUserIdAndStatusOrderByCreatedAtDesc(UUID userId, AlertStatus status);
+
     /**
      * Find active alerts sorted by urgency (RED first, then ORANGE, then YELLOW)
      * Used for counselor alert queue display

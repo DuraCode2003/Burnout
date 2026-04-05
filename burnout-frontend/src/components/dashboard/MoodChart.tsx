@@ -164,60 +164,75 @@ export function MoodChart({ data, isLoading = false }: MoodChartProps) {
           >
             <defs>
               <linearGradient id="moodGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#6366f1" stopOpacity={0.4} />
+                <stop offset="0%" stopColor="#6366f1" stopOpacity={0.6} />
+                <stop offset="60%" stopColor="#6366f1" stopOpacity={0.1} />
                 <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="stressGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.3} />
+                <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.4} />
+                <stop offset="60%" stopColor="#f59e0b" stopOpacity={0.05} />
                 <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
               </linearGradient>
+              <filter id="shadow" height="200%">
+                <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+                <feOffset dx="2" dy="2" result="offsetblur" />
+                <feComponentTransfer>
+                  <feFuncA type="linear" slope="0.5" />
+                </feComponentTransfer>
+                <feMerge>
+                  <feMergeNode />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
             </defs>
 
             <CartesianGrid
-              stroke="rgba(148, 163, 184, 0.1)"
-              strokeDasharray="4 4"
+              stroke="rgba(255, 255, 255, 0.03)"
               vertical={false}
             />
 
             <XAxis
               dataKey="dayLabel"
-              stroke="#475569"
-              fontSize={12}
+              stroke="#94a3b8"
+              fontSize={11}
               tickLine={false}
               axisLine={false}
-              dy={10}
+              dy={15}
             />
 
             <YAxis
-              stroke="#475569"
-              fontSize={12}
+              stroke="#94a3b8"
+              fontSize={11}
               tickLine={false}
               axisLine={false}
               domain={[0, 10]}
               tickCount={6}
-              dx={-5}
+              dx={-10}
             />
 
-            <Tooltip content={<CustomTooltip />} />
+            <Tooltip 
+              content={<CustomTooltip />} 
+              cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
+            />
 
             <Area
               type="monotone"
               dataKey="mood"
               stroke="#6366f1"
-              strokeWidth={3}
+              strokeWidth={4}
               fill="url(#moodGradient)"
-              animationDuration={1500}
+              animationDuration={2000}
               animationEasing="ease-in-out"
               dot={{
                 fill: '#6366f1',
-                strokeWidth: 2,
-                stroke: '#0a0e1a',
+                strokeWidth: 3,
+                stroke: '#0a101f',
                 r: 5,
               }}
               activeDot={{
-                r: 7,
-                strokeWidth: 2,
-                stroke: '#0a0e1a',
+                r: 8,
+                strokeWidth: 3,
+                stroke: '#0a101f',
                 fill: '#8b5cf6',
               }}
             />
@@ -226,21 +241,21 @@ export function MoodChart({ data, isLoading = false }: MoodChartProps) {
               type="monotone"
               dataKey="stress"
               stroke="#f59e0b"
-              strokeWidth={2}
-              strokeDasharray="4 4"
+              strokeWidth={3}
+              strokeDasharray="6 6"
               fill="url(#stressGradient)"
-              animationDuration={1500}
+              animationDuration={2000}
               animationEasing="ease-in-out"
               dot={{
                 fill: '#f59e0b',
                 strokeWidth: 2,
-                stroke: '#0a0e1a',
+                stroke: '#0a101f',
                 r: 4,
               }}
               activeDot={{
-                r: 6,
+                r: 7,
                 strokeWidth: 2,
-                stroke: '#0a0e1a',
+                stroke: '#0a101f',
                 fill: '#fbbf24',
               }}
             />

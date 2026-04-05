@@ -285,6 +285,36 @@ class WellnessAgent:
         prompt = prompt_template.format(data=data)
         return await self.run_single(prompt, context)
 
+    async def generate_daily_tip(
+        self,
+        student_name: str,
+        burnout_score: float,
+        risk_level: str,
+        mood_trend: str,
+    ) -> str:
+        """
+        Generate a personalized daily mindfulness tip.
+        
+        Args:
+            student_name: Name of the student
+            burnout_score: 0-100 score
+            risk_level: LOW, MEDIUM, HIGH, CRITICAL
+            mood_trend: String describing mood trends
+            
+        Returns:
+            Personalized tip string
+        """
+        from prompts.daily_tip import get_tip_prompt
+        
+        prompt = get_tip_prompt(student_name, burnout_score, risk_level, mood_trend)
+        
+        context = {
+            "user_id": "system",
+            "student_name": student_name,
+        }
+        
+        return await self.run_single(prompt, context)
+
 
 # ============================================================================
 # Factory Functions
@@ -346,6 +376,24 @@ def create_counselor_agent() -> WellnessAgent:
         tool_registry=counselor_registry,
         system_prompt=SYSTEM_PROMPT,
         config=COUNSELOR_ASSISTANT_CONFIG,
+    )
+
+
+def create_daily_tip_agent() -> WellnessAgent:
+    """
+    Create agent configured for daily mindfulness tips.
+    
+    Returns:
+        Configured WellnessAgent
+    """
+    from prompts.daily_tip import SYSTEM_PROMPT
+    from tools import student_registry  # Use student registry for any tool-based tips if needed
+    
+    return WellnessAgent(
+        ollama_client=OllamaClient(),
+        tool_registry=student_registry,
+        system_prompt=SYSTEM_PROMPT,
+        config=STUDENT_COMPANION_CONFIG,  # Same config (fast, empathetic)
     )
 
 

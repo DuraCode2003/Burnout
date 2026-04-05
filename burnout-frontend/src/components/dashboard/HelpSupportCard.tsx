@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, Send, CheckCircle2, Loader2, X } from 'lucide-react';
 import { api } from '@/services/api';
@@ -14,6 +15,11 @@ export function HelpSupportCard({ isSidebar }: HelpSupportCardProps) {
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
     "idle"
   );
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,15 +85,16 @@ export function HelpSupportCard({ isSidebar }: HelpSupportCardProps) {
       </button>
 
       {/* Modal Dialog */}
-      <AnimatePresence>
-        {isOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full max-w-md bg-bg-card border border-border-subtle rounded-2xl shadow-xl overflow-hidden pointer-events-auto relative z-[60]"
-            >
+      {mounted && createPortal(
+        <AnimatePresence>
+          {isOpen && (
+            <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="w-full max-w-md bg-bg-card border border-border-subtle rounded-2xl shadow-xl overflow-hidden pointer-events-auto relative z-[160]"
+              >
               <div className="flex items-center justify-between p-4 border-b border-border-subtle">
                 <h3 className="text-lg font-bold text-text-primary flex items-center gap-2">
                   <ShieldAlert className="w-5 h-5 text-orange-500" />
@@ -193,7 +200,9 @@ export function HelpSupportCard({ isSidebar }: HelpSupportCardProps) {
             </motion.div>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>,
+      document.body
+      )}
     </div>
   );
 }

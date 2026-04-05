@@ -20,10 +20,20 @@ public class BurnoutController {
     private final BurnoutService burnoutService;
     private final com.burnouttracker.service.MoodService moodService;
 
+    private final com.burnouttracker.service.AlertService alertService;
+
     public BurnoutController(BurnoutService burnoutService, 
-                             com.burnouttracker.service.MoodService moodService) {
+                             com.burnouttracker.service.MoodService moodService,
+                             com.burnouttracker.service.AlertService alertService) {
         this.burnoutService = burnoutService;
         this.moodService = moodService;
+        this.alertService = alertService;
+    }
+
+    @GetMapping("/active-alert")
+    public ResponseEntity<?> getActiveAlert(@AuthenticationPrincipal UserDetails userDetails) {
+        User user = (User) userDetails;
+        return ResponseEntity.ok(alertService.getLatestActiveAlertForUser(user.getId()));
     }
 
     @GetMapping("/score")

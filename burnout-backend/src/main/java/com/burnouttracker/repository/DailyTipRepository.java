@@ -9,5 +9,6 @@ import java.time.LocalDate;
 
 @Repository
 public interface DailyTipRepository extends JpaRepository<DailyTip, UUID> {
-    Optional<DailyTip> findByDisplayDate(LocalDate date);
+    Optional<DailyTip> findByUserIdAndDisplayDate(UUID userId, LocalDate date);
+    Optional<DailyTip> findByDisplayDateAndUserIdIsNull(LocalDate date);
 }

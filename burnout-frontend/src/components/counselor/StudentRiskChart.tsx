@@ -49,29 +49,27 @@ export function StudentRiskChart({ data, isLoading = false }: StudentRiskChartPr
 
   if (isLoading) {
     return (
-      <motion.div className="card-glow p-card h-[320px] flex items-center justify-center">
+      <div className="h-full min-h-[320px] rounded-2xl bg-white/[0.02] backdrop-blur-xl border border-white/5 p-6 flex flex-col items-center justify-center">
         <div className="animate-pulse flex flex-col items-center gap-4 w-full">
-          <div className="w-48 h-48 rounded-full border-4 border-bg-elevated border-t-accent-indigo animate-spin" />
-          <div className="w-1/2 h-4 bg-bg-elevated rounded" />
+          <div className="w-32 h-32 rounded-full border-4 border-white/5 border-t-indigo-500 animate-spin" />
+          <div className="w-1/3 h-2 bg-white/5 rounded" />
         </div>
-      </motion.div>
+      </div>
     );
   }
 
   return (
     <motion.div
-      className="card-glow p-card h-full flex flex-col"
+      className="h-full rounded-2xl bg-white/[0.02] backdrop-blur-xl border border-white/5 p-6 flex flex-col"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.1 }}
     >
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-lg font-semibold font-sora text-text-primary">
-            Student Risk Breakdown
-          </h2>
-          <p className="text-xs text-text-secondary mt-1">Active alerts by risk severity</p>
-        </div>
+      <div className="mb-6">
+        <h2 className="text-[10px] font-black font-sora text-white/30 uppercase tracking-[0.25em] mb-1">
+          Risk Pulse
+        </h2>
+        <h3 className="text-lg font-bold text-white tracking-tight">Student Breakdown</h3>
       </div>
 
       <div className="flex-grow flex items-center justify-center relative min-h-[220px]">
@@ -84,33 +82,53 @@ export function StudentRiskChart({ data, isLoading = false }: StudentRiskChartPr
                 data={data}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={85}
-                paddingAngle={5}
+                innerRadius={65}
+                outerRadius={90}
+                paddingAngle={8}
                 dataKey="count"
                 nameKey="level"
                 stroke="none"
                 animationDuration={1500}
-                animationEasing="ease-out"
+                startAngle={90}
+                endAngle={450}
               >
                 {data.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
-                    fill={entry.color} 
-                    style={{ filter: `drop-shadow(0px 4px 8px ${entry.color}40)` }} 
+                    fill={entry.color}
+                    fillOpacity={0.8}
+                    style={{ filter: `drop-shadow(0px 0px 10px ${entry.color}40)` }}
                   />
                 ))}
               </Pie>
-              <Tooltip content={<CustomTooltip />} />
-              <Legend 
-                verticalAlign="bottom" 
-                height={36} 
-                iconType="circle"
-                wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
-              />
+              <Tooltip content={<CustomTooltip />} cursor={false} />
             </PieChart>
           </ResponsiveContainer>
         )}
+        
+        {/* Center Text */}
+        {hasData && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+            <span className="text-3xl font-black font-sora text-white leading-none">
+              {data.reduce((acc, curr) => acc + curr.count, 0)}
+            </span>
+            <span className="text-[8px] font-black text-rose-500/60 uppercase tracking-widest mt-1">
+              Active
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className="mt-6 grid grid-cols-3 gap-2">
+        {data.map((item) => (
+          <div key={item.level} className="flex flex-col items-center">
+            <div className="flex items-center gap-1.5 mb-1">
+              <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: item.color }} />
+              <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">{item.level}</span>
+            </div>
+            <span className="text-xs font-black text-white">{item.count}</span>
+          </div>
+        ))}
       </div>
     </motion.div>
   );

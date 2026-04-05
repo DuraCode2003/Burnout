@@ -43,14 +43,18 @@ export default function CounselorLayout({ children }: CounselorLayoutProps) {
 
   // Fetch unread alert count
   useEffect(() => {
-    if (!user) return;
+    if (!user || user.role === 'STUDENT') return;
 
     const fetchUnreadCount = async () => {
       try {
-        const stats = await counselorService.getStats();
-        setUnreadCount(stats.queue.urgent + stats.queue.red);
+        const stats = await counselorService.getCounselorStats();
+        if (stats && stats.queue) {
+          setUnreadCount(stats.queue.urgent + stats.queue.red);
+        }
       } catch (error) {
         console.error("Failed to fetch unread count:", error);
+        // Fallback to 0 if stats fail, don't crash the layout
+        setUnreadCount(0);
       }
     };
 
@@ -90,17 +94,7 @@ export default function CounselorLayout({ children }: CounselorLayoutProps) {
           <CounselorTopBar onMenuClick={() => setSidebarOpen(true)} />
           
           <main className="p-6 lg:p-8">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={pathname}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
+            {children}
           </main>
         </div>
       </div>

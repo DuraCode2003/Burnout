@@ -38,6 +38,12 @@ public class AlertService {
     private final AlertSpecificationBuilder specBuilder;
 
     @Transactional(readOnly = true)
+    public Alert getLatestActiveAlertForUser(UUID userId) {
+        return alertRepository.findTopByUserIdAndStatusOrderByCreatedAtDesc(userId, AlertStatus.ACTIVE)
+                .orElse(null);
+    }
+
+    @Transactional(readOnly = true)
     public List<AlertResponseDTO> getActiveAlerts() {
         Specification<Alert> spec = specBuilder.buildDynamicQueueFilters(List.of(AlertStatus.ACTIVE), null, null);
         List<Alert> alerts = alertRepository.findAll(spec);

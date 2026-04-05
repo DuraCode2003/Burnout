@@ -8,10 +8,14 @@ import { BurnoutScoreCard } from '@/components/dashboard/BurnoutScoreCard';
 import { MoodChart } from '@/components/dashboard/MoodChart';
 import { DailyTipCard } from '@/components/dashboard/DailyTipCard';
 import { StatusCard } from '@/components/dashboard/StatusCard';
-import { HelpSupportCard } from '@/components/dashboard/HelpSupportCard';
 import { ChatWidget } from '@/components/ai/ChatWidget';
+import { SupportHub } from '@/components/dashboard/SupportHub';
 import { api } from '@/services/api';
+import { burnoutService } from '@/services/burnoutService';
+import { supportService } from '@/services/supportService';
+import { useAuth } from '@/context/AuthContext';
 import { getTimeBasedGreeting, formatDate } from '@/utils/helpers';
+import type { Alert } from '@/types/counselor';
 import type { RiskLevel } from '@/types';
 
 interface DashboardData {
@@ -57,6 +61,8 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [isMounted, setIsMounted] = useState(false);
   const [tip, setTip] = useState<Tip | null>(null);
+  const [activeAlert, setActiveAlert] = useState<Alert | null>(null);
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     setIsMounted(true);
@@ -116,11 +122,28 @@ export default function DashboardPage() {
       }
     }
 
+    async function fetchSupportData() {
+      try {
+        const alert = await burnoutService.getActiveAlert();
+        if (alert) {
+          setActiveAlert(alert);
+          const session = await supportService.getActiveSession(alert.id);
+          if (session) {
+            setActiveSessionId(session.id);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch support data:', err);
+      }
+    }
+
     fetchDashboardData();
+    fetchSupportData();
   }, []);
 
   const greeting = getTimeBasedGreeting();
-  const userName = 'Student';
+  const { user: authUser } = useAuth();
+  const userName = authUser?.name || 'Student';
 
 
   const containerVariants = {
@@ -221,15 +244,26 @@ export default function DashboardPage() {
                   <div className="md:col-span-2 lg:col-span-3">
                     <MoodChart data={data.moodHistory} />
                   </div>
-                  <div className="md:col-span-2 lg:col-span-2">
-                    <DailyTipCard tip={tip?.text || 'Stay mindful and take care of yourself.'} category={tip?.category || 'mindfulness'} />
-                  </div>
-                </motion.div>
-              ) : null}
-            </AnimatePresence>
+                    <div className="md:col-span-2 lg:col-span-2">
+                      <DailyTipCard tip={tip?.text || 'Stay mindful and take care of yourself.'} category={tip?.category || 'mindfulness'} />
+                    </div>
 
-      {/* AI Chat Widget */}
-      <ChatWidget />
-    </div>
-  );
-}
+                    {activeAlert && !activeSessionId && (
+                      <div className="md:col-span-3">
+                        <SupportHub 
+                          alertId={activeAlert.id} 
+                          onSessionCreated={() => {
+                            window.location.reload();
+                          }} 
+                        />
+                      </div>
+                    )}
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
+  
+        {/* AI Chat Widget */}
+        <ChatWidget />
+      </div>
+    );
+  }

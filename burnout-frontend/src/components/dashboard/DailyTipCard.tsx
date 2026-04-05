@@ -1,6 +1,6 @@
-'use client';
-
 import { motion } from 'framer-motion';
+import Image from 'next/image';
+import lumaLogo from '@/assets/luma-logo.png';
 
 interface DailyTipCardProps {
   tip: string;
@@ -9,51 +9,33 @@ interface DailyTipCardProps {
 
 const categoryConfig = {
   breathing: {
-    icon: '🧘',
     label: 'Breathing',
     color: '#6366f1',
-    bgColor: 'rgba(99, 102, 241, 0.1)',
-    borderColor: 'rgba(99, 102, 241, 0.3)',
     glow: 'shadow-glow-indigo',
   },
   sleep: {
-    icon: '🌙',
     label: 'Sleep',
     color: '#8b5cf6',
-    bgColor: 'rgba(139, 92, 246, 0.1)',
-    borderColor: 'rgba(139, 92, 246, 0.3)',
     glow: 'shadow-glow-violet',
   },
   exercise: {
-    icon: '💪',
     label: 'Exercise',
     color: '#10b981',
-    bgColor: 'rgba(16, 185, 129, 0.1)',
-    borderColor: 'rgba(16, 185, 129, 0.3)',
     glow: 'shadow-glow-emerald',
   },
   mindfulness: {
-    icon: '🧠',
     label: 'Mindfulness',
     color: '#a855f7',
-    bgColor: 'rgba(168, 85, 247, 0.1)',
-    borderColor: 'rgba(168, 85, 247, 0.3)',
     glow: 'shadow-glow-violet',
   },
   break: {
-    icon: '☕',
     label: 'Break',
     color: '#f59e0b',
-    bgColor: 'rgba(245, 158, 11, 0.1)',
-    borderColor: 'rgba(245, 158, 11, 0.3)',
     glow: 'shadow-glow-amber',
   },
   social: {
-    icon: '👥',
     label: 'Social',
     color: '#3b82f6',
-    bgColor: 'rgba(59, 130, 246, 0.1)',
-    borderColor: 'rgba(59, 130, 246, 0.3)',
     glow: 'shadow-glow-indigo',
   },
 };
@@ -89,83 +71,108 @@ export function DailyTipCard({ tip, category }: DailyTipCardProps) {
 
   return (
     <motion.div
-      className="card-glow p-card relative overflow-hidden"
+      className="card-glow p-card relative overflow-hidden group h-full bg-bg-card/40 backdrop-blur-xl border border-white/5"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.3 }}
-      whileHover={{ scale: 1.02 }}
+      transition={{ duration: 0.6, delay: 0.3 }}
+      whileHover={{ y: -4 }}
     >
+      {/* Dynamic Aurora-style Background Glow */}
       <motion.div
-        className="absolute -top-20 -right-20 w-40 h-40 rounded-full opacity-10"
+        className="absolute -top-24 -right-24 w-64 h-64 rounded-full opacity-20 pointer-events-none blur-3xl"
         style={{
           background: `radial-gradient(circle, ${config.color} 0%, transparent 70%)`,
         }}
         animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.1, 0.15, 0.1],
+          scale: [1, 1.3, 1],
+          opacity: [0.1, 0.2, 0.1],
+          x: [0, 20, 0],
+          y: [0, -20, 0],
         }}
         transition={{
-          duration: 4,
+          duration: 8,
           repeat: Infinity,
           ease: 'easeInOut',
         }}
       />
 
-      <div className="relative">
-        <div className="flex items-center gap-3 mb-4">
-          <motion.div
-            className="flex items-center justify-center w-12 h-12 rounded-xl"
-            style={{
-              background: config.bgColor,
-              border: `1px solid ${config.borderColor}`,
-            }}
-            initial={{ scale: 0, rotate: -180 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{
-              type: 'spring',
-              stiffness: 200,
-              damping: 15,
-              delay: 0.5,
-            }}
-          >
-            <span className="text-2xl">{config.icon}</span>
-          </motion.div>
-          <div>
-            <p className="text-xs text-text-secondary uppercase tracking-wider">
-              Daily Tip
-            </p>
-            <p
-              className="text-sm font-semibold"
-              style={{ color: config.color }}
+      <div className="relative z-10 flex flex-col h-full">
+        <div className="flex items-start justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <motion.div
+              className="relative w-14 h-14 rounded-2xl overflow-hidden shadow-2xl transition-all duration-500 group-hover:scale-110 border border-white/10"
+              initial={{ scale: 0, rotate: -45 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{
+                type: 'spring',
+                stiffness: 200,
+                damping: 15,
+                delay: 0.5,
+              }}
             >
-              {config.label}
-            </p>
+              <div 
+                className="absolute inset-0 opacity-40 bg-gradient-to-tr"
+                style={{ backgroundImage: `linear-gradient(to top right, ${config.color}, transparent)` }}
+              />
+              <Image 
+                src={lumaLogo} 
+                alt="Luma AI Logo" 
+                fill 
+                sizes="56px"
+                className="object-cover relative z-10 p-2" 
+              />
+            </motion.div>
+            <div>
+              <div className="flex items-center gap-2 mb-0.5">
+                <h3 className="text-[10px] uppercase tracking-[0.2em] font-black text-indigo-400">
+                  Insight from Luma
+                </h3>
+                <span className="px-1.5 py-0.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[8px] font-black text-indigo-400 uppercase tracking-tighter">
+                  AI Powered
+                </span>
+              </div>
+              <p
+                className="text-lg font-bold font-sora text-white leading-tight"
+              >
+                {config.label}
+              </p>
+            </div>
           </div>
         </div>
 
-        <motion.p
-          className="text-text-primary leading-relaxed"
+        <motion.div 
+          className="flex-1 px-1"
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.6 }}
+          transition={{ delay: 0.7, duration: 0.5 }}
         >
-          {tip}
-        </motion.p>
-
-        <motion.div
-          className="mt-4 flex items-center gap-2"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-        >
-          <div
-            className="w-1 h-1 rounded-full"
-            style={{ backgroundColor: config.color }}
-          />
-          <span className="text-xs text-text-secondary">
-            Tip of the day
-          </span>
+          <p className="text-text-primary text-base font-medium leading-relaxed italic opacity-95">
+            "{tip}"
+          </p>
         </motion.div>
+
+        <div className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <motion.div
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ backgroundColor: config.color }}
+              animate={{ 
+                opacity: [0.4, 1, 0.4],
+                scale: [0.8, 1.2, 0.8]
+              }}
+              transition={{ duration: 3, repeat: Infinity }}
+            />
+            <span className="text-[10px] uppercase tracking-wider font-bold text-text-secondary/50">
+              Wellness Strategy • {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
+            </span>
+          </div>
+          <motion.button 
+            className="text-[10px] uppercase tracking-widest font-black text-text-secondary/40 hover:text-white transition-colors"
+            whileHover={{ x: 3 }}
+          >
+            Share →
+          </motion.button>
+        </div>
       </div>
     </motion.div>
   );

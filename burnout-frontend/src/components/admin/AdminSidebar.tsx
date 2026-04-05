@@ -75,6 +75,7 @@ export function AdminSidebar({ isOpen, onClose, activeRoute }: AdminSidebarProps
               src={logo} 
               alt="Burnout Tracker Logo" 
               fill 
+              sizes="44px"
               className="object-cover"
             />
           </motion.div>
@@ -156,14 +157,6 @@ export function AdminSidebar({ isOpen, onClose, activeRoute }: AdminSidebarProps
           </div>
         </div>
 
-        <Link
-          href="/dashboard"
-          onClick={onClose}
-          className="flex items-center gap-3 px-4 py-3 rounded-xl text-text-secondary hover:text-text-primary hover:bg-bg-elevated transition-all duration-300 mb-2"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">Back to Student View</span>
-        </Link>
 
         <button
           onClick={handleLogout}
